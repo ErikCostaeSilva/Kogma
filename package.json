@@ -1,0 +1,18 @@
+{
+  "name": "metallurgica-app",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "install:all": "npm -w packages/app i && npm -w packages/main i",
+    "dev": "concurrently \"npm:dev:app\" \"npm:dev:main\"",
+    "dev:app": "npm -w packages/app run dev",
+    "dev:main": "npm -w packages/main run dev",
+    "build": "npm -w packages/app run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

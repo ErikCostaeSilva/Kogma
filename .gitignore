@@ -1,0 +1,31 @@
+# Node / monorepo
+node_modules
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+package-lock.json
+
+# Builds / dist
+dist
+.next
+out
+release
+**/*.log
+
+# Ambiente / credenciais
+.env
+**/.env
+*.local
+
+# IDE
+.vscode
+.idea
+
+# Sistemas
+.DS_Store
+Thumbs.db
+
+# Electron artefatos
+*.exe
+*.dmg
+*.AppImage
