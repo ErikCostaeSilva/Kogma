@@ -195,3 +195,32 @@ span.icon svg {
 .modal-center{ padding: 10px 8px; text-align:center; }
 .modal-text-strong{ font-weight:700; margin-bottom:6px; }
 .modal-text-muted{ color:#4b5a76; font-size:14px; }
+
+/* tabela com 3 colunas */
+.table-head.three{ display:grid; grid-template-columns: 1fr 220px 240px; align-items:center; }
+.row{ display:grid; grid-template-columns: 1fr 220px 240px; align-items:center; padding:8px; border-radius:8px; }
+.col-role{ display:flex; gap:8px; align-items:center; }
+
+/* badges de status */
+.badge{
+  display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px;
+  border:1px solid transparent;
+}
+.badge-green{ background:#e8fff1; color:#0f703b; border-color:#baf0d2; }
+.badge-gray{ background:#eef1f6; color:#4b5a76; border-color:#dae3f4; }
+
+/* botões ação status */
+.btn-warning{
+  background:#fff4e5; color:#8a3b00; border:1px solid #ffc074; padding:8px 14px; border-radius:20px; font-weight:700; cursor:pointer;
+}
+.btn-warning:hover{ filter:brightness(0.98); }
+.btn-success{
+  background:#e8fff1; color:#0f703b; border:1px solid #baf0d2; padding:8px 14px; border-radius:20px; font-weight:700; cursor:pointer;
+}
+.btn-success:hover{ filter:brightness(0.98); }
+
+.col-status{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+}

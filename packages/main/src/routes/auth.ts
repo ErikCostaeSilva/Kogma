@@ -26,11 +26,12 @@ auth.post("/login", async (req, res) => {
 
   // 1) verificar e-mail
   const [rows] = await pool.query(
-    "SELECT id, name, email, password_hash, role FROM users WHERE email = ?",
+    "SELECT id, name, email, password_hash, role, status FROM users WHERE email = ?",
     [email]
   );
   const user = Array.isArray(rows) ? (rows as any[])[0] : null;
   if (!user) return res.status(401).json({ message: "E-mail inválido" });
+  if (user.status === "inactive") return res.status(403).json({ message: "Usuário desabilitado" });
 
   // 2) verificar senha
   const ok = user.password_hash ? await bcrypt.compare(password, user.password_hash) : false;
