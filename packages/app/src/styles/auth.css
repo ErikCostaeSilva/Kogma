@@ -4,6 +4,11 @@
   --muted:#cfd7e6;
   --radius:22px;
   --font: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+   --nav-bg: #264a7a;                 /* seu azul de base */
+  --nav-active: rgba(255,255,255,0.10); /* faixa clarinha */
+  --nav-active-strong: #2c578e;      /* tom para ativo */
+  --nav-text: #ffffff;
+  --nav-muted: rgba(255,255,255,0.90);
 }
 
 *{box-sizing:border-box}
@@ -34,3 +39,90 @@ body{margin:0;background:var(--blue);font-family:var(--font);color:#fff}
 .success{background:#e8fff1;color:#0f703b;border:1px solid #baf0d2;padding:10px 12px;border-radius:12px;text-align:left;font-size:14px}
 
 .logo-spacer{height:12vh}
+
+.app-shell{ display:flex; min-height:100vh; background:var(--white); }
+
+.sidebar{
+  width: 18vw;
+  background: var(--nav-bg);
+  color: var(--nav-text);
+  padding: 22px 16px;
+}
+
+.sidebar-brand{
+  font-family: var(--font);
+  font-weight: 900;
+  font-size: 32px;                 /* grande como na imagem */
+  letter-spacing: 1px;
+  margin: 0 0 18px 6px;
+}
+
+.user-block{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 6px 18px 6px;
+}
+.user-avatar{
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ffffff;             /* círculo branco */
+  opacity: 0.95;
+}
+.user-name{
+  color: var(--nav-muted);
+  font-weight: 500;
+  letter-spacing: .2px;
+}
+
+.sidebar-nav{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* link base */
+.nav-link{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius: 6px;
+  color: var(--nav-muted);
+  text-decoration:none;
+  background: transparent;
+  border:0;
+  text-align:left;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* hover com véu clarinho */
+.nav-link:hover{
+  background: var(--nav-active);
+  color:#fff;
+}
+
+/* ativo com faixa azul um pouco mais clara */
+.nav-link.active{
+  background: var(--nav-active-strong);
+  color:#fff;
+}
+
+/* ícones finos */
+.nav-link .icon{
+  display:inline-flex;
+  width:18px;
+  height:18px;
+  color: currentColor;
+}
+
+.nav-link.logout{ margin-top: 6px; }
+
+.app-main{ flex:1; padding: 24px; color:#0e1b2f; }
+
+span.icon svg {
+    display: flex !important;
+    align-self: center;
+}

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"; // com shim + @types funciona
 import jwt from "jsonwebtoken";
 import { pool } from "../db";
 import { sendResetEmail } from "../mailer";
+import { requireAuth } from "../middlewares/requireAuth";
 
 export const auth = Router();
 
@@ -77,4 +78,16 @@ auth.post("/password/reset", async (req, res) => {
   } catch {
     res.status(400).json({ message: "Token inválido ou expirado" });
   }
+});
+
+// GET /auth/me
+auth.get("/me", requireAuth, async (req, res) => {
+  const userId = (req as any).user.id;
+  const [rows] = await pool.query(
+    "SELECT id, name, email, role, created_at FROM users WHERE id = ?",
+    [userId]
+  );
+  const user = Array.isArray(rows) ? (rows as any[])[0] : null;
+  if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+  res.json({ user });
 });
