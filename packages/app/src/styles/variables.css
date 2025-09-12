@@ -1,0 +1,40 @@
+:root{
+  /* cores base do Figma */
+  --blue-900:#1f3a61;
+  --blue-800:#25436e;
+  --blue-700:#2a4a79; /* fundo lateral */
+  --blue-650:#2e4b78;
+  --blue-600:#2f4f82; /* header cards */
+  --blue-500:#2a3f66; /* textos escuros */
+  --blue-400:#375a8f;
+  --white:#ffffff;
+  --bg:#f3f6fb;
+  --muted:#cfd7e6;
+  --success:#87D3AB;
+  --warning:#F2DA6E;
+  --danger:#F6A19B;
+
+  --radius-24:24px;
+  --radius-20:20px;
+  --radius-16:16px;
+  --shadow:0 6px 20px rgba(13, 36, 76, 0.08);
+
+  --font:"Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+html{font-size:16px}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--blue-500);
+  font-family:var(--font);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+h1,h2,h3,h4{margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+

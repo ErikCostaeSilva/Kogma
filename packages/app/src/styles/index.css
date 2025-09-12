@@ -1,0 +1,17 @@
+@import "./variables.css";
+@import "./legacy-auth.css";
+@import "./sidebar.css";
+@import "./app-shell.css";
+@import "./toolbar.css";
+@import "./table-list.css";
+@import "./buttons-status.css";
+@import "./timeline.css";
+@import "./modal.css";
+@import "./overrides.css";
+@import "./layout.css";
+@import "./components.css";
+@import "./auth.css";
+@import "./pedidos.css";
+@import "./clientes.css";
+@import "./checklist.css";
+@import "./admin.css";

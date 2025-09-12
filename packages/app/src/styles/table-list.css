@@ -1,0 +1,12 @@
+/* linhas da lista de pedidos */
+.row{
+  display:grid; gap:12px; align-items:center;
+  padding:12px 14px;
+  border:1px solid #e7eef9; border-radius:14px;
+  background:#fff; margin-bottom:12px;
+}
+.row.hover{ transition:box-shadow .2s, transform .05s }
+.row.hover:hover{ box-shadow:0 6px 16px rgba(22,34,56,.06) }
+
+.col-email div:first-child{ text-transform:uppercase; letter-spacing:.4px; }
+.col-email div:last-child{ opacity:.85 }

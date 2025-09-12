@@ -1,0 +1,3 @@
+.clients .table-head{grid-template-columns:1fr 240px}
+.clients .row{grid-template-columns:1fr 240px}
+.clients .row .right{display:flex;justify-content:flex-end}

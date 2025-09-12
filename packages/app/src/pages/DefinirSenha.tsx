@@ -39,7 +39,6 @@ export default function DefinirSenhaPage() {
   return (
     <main className="auth-shell">
       <div className="auth-card" role="main" aria-labelledby="title">
-        <div className="logo-spacer" />
         <h1 id="title" className="brand">KOGMA</h1>
         <div className="subtitle">DEFINIR SENHA</div>
 

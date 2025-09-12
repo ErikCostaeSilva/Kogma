@@ -1,0 +1,180 @@
+/* Usa APENAS variáveis do seu :root */
+
+.ckl-wrap{
+  padding: 24px 28px;
+  color: var(--blue-500);
+  font-family: var(--font);
+}
+
+/* ===== Header (faixa clara + título + controles) ===== */
+.ckl-header{
+  background: color-mix(in srgb, var(--blue-600) 10%, var(--bg) 90%);
+  /* fallback se o browser não suportar color-mix */
+  background: rgba(47,79,130,.08);
+  border-radius: var(--radius-24);
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow);
+}
+.ckl-header h1{
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 1.5px;
+  font-weight: 900;
+  color: var(--blue-500);
+  text-transform: uppercase;
+}
+
+/* controles do header */
+.ckl-controls{
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* ===== Pill de status ===== */
+.status-pill{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 8px 16px;
+  height: 44px;
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: 0 1px 0 rgba(0,0,0,.04) inset;
+}
+.status-pill.lg{ height: 48px; }
+.status-pill.md{ height: 40px; padding: 6px 14px; }
+.status-pill.sm{ height: 34px; padding: 4px 12px; }
+
+.status-pill.neutral{
+  background: var(--white);
+}
+
+/* cores por status (iguais ao mock) */
+.status-pill.open{ background: var(--warning); }
+.status-pill.late{ background: color-mix(in srgb, var(--danger) 55%, var(--white) 45%); }
+.status-pill.done{ background: var(--success); }
+
+/* select interno */
+.status-pill select{
+  appearance: none; -webkit-appearance: none;
+  background: transparent; border: 0; outline: 0;
+  font-weight: 800; color: var(--blue-500);
+  padding-right: 28px; cursor: pointer;
+}
+.status-pill .caret{
+  position: absolute; right: 10px; pointer-events: none;
+  opacity: .8; color: var(--blue-500);
+}
+
+/* ===== Busca arredondada com ícone ===== */
+.search-rounded{
+  display: inline-flex; align-items: center; gap: 8px;
+  border-radius: 999px;
+  background: var(--white);
+  padding: 10px 12px 10px 12px;
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: 0 1px 0 rgba(0,0,0,.04) inset;
+  height: 44px;
+}
+.search-rounded svg{ color: var(--muted); }
+.search-rounded input{
+  border: 0; outline: 0; background: transparent;
+  color: var(--blue-500); width: 260px; font-weight: 600;
+}
+
+/* ===== Card branco ===== */
+.ckl-card{
+  margin-top: 16px;
+  background: var(--white);
+  border-radius: var(--radius-20);
+  border: 1px solid var(--muted);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+/* rótulos */
+.ckl-labels{
+  display: grid;
+  grid-template-columns: 2fr 3fr 160px;
+  gap: 12px;
+  padding: 8px 10px 14px 10px;
+  color: var(--blue-650);
+  font-weight: 700;
+}
+
+/* ===== Lista de pedidos ===== */
+.ckl-list{ display: flex; flex-direction: column; gap: 12px; }
+
+.ckl-item{
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-16);
+  overflow: hidden;
+  background: var(--white);
+}
+
+/* linha clicável do pedido */
+.ckl-head-row{
+  width: 100%; border: 0; background: #f7f9fd;
+  display: grid; grid-template-columns: 2fr 3fr 160px;
+  gap: 12px; align-items: center; text-align: left;
+  padding: 14px 16px; cursor: pointer; color: var(--blue-500);
+}
+.ckl-head-row:hover{ background: #eff4fb; }
+
+/* estado expandido: faixa azul escura + texto branco */
+.ckl-head-row.active{
+  background: var(--blue-500);
+  color: var(--white);
+}
+.ckl-head-row.active .status-pill select,
+.ckl-head-row.active .status-pill .caret{ color: var(--blue-500); } /* mantém pill legível */
+
+/* colunas */
+.col.empresa{ font-weight: 800; }
+.col.pedido{ font-weight: 700; }
+.col.status{ justify-self: end; }
+
+/* ===== Materiais ===== */
+.ckl-materials{
+  background: #fbfdff;
+  border-top: 1px solid var(--muted);
+}
+.ckl-m-row{
+  display: grid;
+  grid-template-columns: 1fr 120px 52px;
+  gap: 12px; align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--muted);
+  color: var(--blue-500);
+  font-weight: 600;
+}
+.ckl-m-row:last-child{ border-bottom: 0; }
+.ckl-m-row .m-desc{ overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ckl-m-row .m-qty{ text-align: right; color: var(--blue-650); font-weight: 800; }
+.ckl-m-row .m-check{ display: flex; justify-content: center; }
+.ckl-m-row.done .m-desc{
+  text-decoration: line-through; color: #8a97ad;
+}
+
+/* vazios */
+.ckl-empty{
+  padding: 28px; color: var(--blue-650); font-weight: 700;
+  opacity: .85;
+}
+
+/* ===== Responsivo ===== */
+@media (max-width: 900px){
+  .ckl-header{ grid-template-columns: 1fr; row-gap: 10px; }
+  .ckl-controls{ justify-content: flex-start; flex-wrap: wrap; }
+  .search-rounded input{ width: 180px; }
+  .ckl-labels, .ckl-head-row{
+    grid-template-columns: 1fr 1fr;
+  }
+  .col.status{ justify-self: start; margin-top: 6px; }
+  .ckl-labels span:last-child{ display:none; }
+}

@@ -34,9 +34,8 @@ export default function RecuperarSenha() {
   return (
     <main className="auth-shell">
       <div className="auth-card" role="main" aria-labelledby="title">
-        <div className="logo-spacer" />
         <h1 id="title" className="brand">KOGMA</h1>
-        <div className="subtitle">RECUPERAR / CADASTRAR SENHA</div>
+        <div className="subtitle">CADASTRAR SENHA</div>
 
         <form className="form" onSubmit={onSubmit}>
           {ok && <div className="alert alert-success">Se o e-mail estiver cadastrado, você receberá um link para definir a senha.</div>}
@@ -62,7 +61,7 @@ export default function RecuperarSenha() {
           )}
 
           <div className="row-links" style={{marginTop:14}}>
-            <Link to="/auth/login">Voltar ao login</Link>
+            <p className="warnChangePass">Caso seu e-mail não esteja cadastrado solicite a um admistrador que inclua o acesso no sistema. <Link to="/auth/login">Voltar ao login</Link></p>
           </div>
         </form>
       </div>

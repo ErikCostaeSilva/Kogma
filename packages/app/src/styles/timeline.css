@@ -1,0 +1,50 @@
+.expanded{
+  background:#f6f8fb;border:1px solid #e3ebf7;border-radius:14px;
+  padding:12px; margin-top:-6px;
+}
+.expanded-grid{
+  display:grid; grid-template-columns: 1fr 260px; gap:16px; align-items:stretch;
+}
+
+/* cartão timeline */
+.timeline{
+  background:#fff; border:1px solid #dfe6f1; border-radius:14px;
+  padding:16px 18px;
+}
+
+/* trilho + progresso */
+.timeline-track{
+  position:relative; height:6px; background:#e8eef9; border-radius:999px;
+  margin:18px 8px 14px;
+}
+.timeline-track::before{
+  content:""; position:absolute;left:0;top:0;bottom:0;
+  width:var(--progress, 0%); background:#2f4d7f; border-radius:999px;
+  transition:width .35s ease;
+}
+
+/* passos */
+.timeline-steps{
+  display:grid; grid-template-columns:repeat(6,1fr); gap:12px;
+}
+.step{ text-align:center; color:#2a3f66 }
+.step .dot{
+  width:18px;height:18px;border-radius:50%;
+  margin:-20px auto 6px; background:#fff; border:4px solid #2f4d7f;
+  box-shadow:0 0 0 2px #e9effb inset;
+}
+.step .name{ font-weight:800 }
+.step .date{ font-size:13px; opacity:.9; margin-top:6px }
+
+/* estados */
+.step.pending .dot{ border-color:#cfd7e6; box-shadow:0 0 0 2px #f3f6fd inset; }
+.step.disabled .dot{ border-color:#e6ecf6; background:#f5f8fd }
+.step.done .dot{ background:#2f4d7f; border-color:#2f4d7f }
+
+/* cartucho prazo final */
+.deadline-pill{
+  background:#2e4775; color:#fff; border-radius:16px; padding:16px 18px;
+  display:grid; place-items:center; text-align:center; min-width:220px;
+}
+.deadline-pill .kicker{ opacity:.85; font-size:13px; letter-spacing:.6px }
+.deadline-pill .date{ font-size:28px; font-weight:900; line-height:1.1 }

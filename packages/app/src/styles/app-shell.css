@@ -1,0 +1,15 @@
+.card{
+  background:var(--card);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  border:1px solid #e6edf7;
+  overflow:hidden;
+}
+
+/* cabeça da lista dentro do card */
+.table-head{
+  display:grid; gap:12px; padding:14px 18px;
+  color:#62739a; font-weight:700;
+  border-bottom:1px solid #e7eef9;
+}
+.table-body{ padding:12px 14px 18px }
