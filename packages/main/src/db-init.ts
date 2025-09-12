@@ -1,48 +1,86 @@
 import { pool } from "./db";
 
-/** pega o schema atual para consultar o information_schema */
-async function getCurrentSchema(): Promise<string> {
-  const [rows] = await pool.query("SELECT DATABASE() AS db");
-  const db = Array.isArray(rows) ? (rows as any[])[0]?.db : null;
-  if (!db) throw new Error("DATABASE() retornou vazio");
-  return db;
-}
-
-/** verifica se uma coluna existe */
-async function columnExists(table: string, column: string): Promise<boolean> {
-  const schema = await getCurrentSchema();
-  const [rows] = await pool.query(
-    `SELECT 1
-       FROM information_schema.COLUMNS
-      WHERE TABLE_SCHEMA = ?
-        AND TABLE_NAME   = ?
-        AND COLUMN_NAME  = ?
-      LIMIT 1`,
-    [schema, table, column]
-  );
-  return Array.isArray(rows) && rows.length > 0;
-}
-
 export async function ensureSchema() {
-  // Cria a tabela base (já com status) se ainda não existir
+  // db selecionado
+  await pool.query("CREATE DATABASE IF NOT EXISTS metallurgica CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci");
+  await pool.query("USE metallurgica");
+
+  // USERS
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(120) NOT NULL DEFAULT '',
-      email VARCHAR(160) UNIQUE NOT NULL,
-      password_hash VARCHAR(255) NULL,
-      role VARCHAR(30) NOT NULL DEFAULT 'user',
+      name VARCHAR(120) NOT NULL DEFAULT 'Usuário',
+      email VARCHAR(190) NOT NULL UNIQUE,
+      password_hash VARCHAR(255),
+      role ENUM('admin','user') NOT NULL DEFAULT 'user',
       status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+      reset_token VARCHAR(255),
+      reset_expires DATETIME,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB;
   `);
 
-  // Se a tabela já existia sem 'status', adiciona agora (compatível com versões antigas)
-  if (!(await columnExists("users", "status"))) {
-    await pool.query(
-      `ALTER TABLE users ADD COLUMN status ENUM('active','inactive') NOT NULL DEFAULT 'active'`
-    );
-    // garante valor para linhas antigas
-    await pool.query(`UPDATE users SET status = 'active' WHERE status IS NULL`);
+  // COMPANIES
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS companies (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(190) NOT NULL,
+      cnpj VARCHAR(14) NOT NULL UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;
+  `);
+
+  // ORDERS
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      company_id INT NOT NULL,
+      title VARCHAR(190) NOT NULL,
+      qty DECIMAL(12,3) NOT NULL DEFAULT 0,
+      unit ENUM('Unidades','KG','M','M2','M3','Peças') NOT NULL DEFAULT 'Unidades',
+      client_deadline DATE,
+      final_deadline DATE,
+      status ENUM('open','late','done') NOT NULL DEFAULT 'open',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_orders_company FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+      INDEX idx_orders_company (company_id),
+      INDEX idx_orders_status (status)
+    ) ENGINE=InnoDB;
+  `);
+
+  // ORDER_PROCESSES (processos fixos com data prevista + concluído)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS order_processes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      order_id INT NOT NULL,
+      name ENUM('Corte a laser','Calandragem','Dobra','Montagem','Soldagem','Pintura') NOT NULL,
+      planned_date DATE NULL,
+      done TINYINT(1) NOT NULL DEFAULT 0,
+      CONSTRAINT fk_proc_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+      UNIQUE KEY uniq_order_process (order_id, name)
+    ) ENGINE=InnoDB;
+  `);
+
+  // ORDER_MATERIALS
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS order_materials (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      order_id INT NOT NULL,
+      description VARCHAR(255) NOT NULL,
+      qty DECIMAL(12,3) NOT NULL DEFAULT 0,
+      unit ENUM('Peças','KG','M','M2','M3') NOT NULL DEFAULT 'Peças',
+      in_stock TINYINT(1) NOT NULL DEFAULT 0,
+      CONSTRAINT fk_mat_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+      INDEX idx_mat_order (order_id)
+    ) ENGINE=InnoDB;
+  `);
+
+  // Garante que usuários antigos tenham coluna status (para quem veio de schema anterior)
+  const [cols]: any = await pool.query(`
+    SELECT COLUMN_NAME FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'status'
+  `);
+  if (!cols.length) {
+    await pool.query(`ALTER TABLE users ADD COLUMN status ENUM('active','inactive') NOT NULL DEFAULT 'active'`);
   }
 }

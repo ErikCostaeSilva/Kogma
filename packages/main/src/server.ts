@@ -1,33 +1,42 @@
-import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { auth } from "./routes/auth";
 import { ensureSchema } from "./db-init";
-import { requireAuth } from "./middlewares/requireAuth";
-import { admin } from "./routes/admin";
+
+// ROTAS
+import { auth } from "./routes/auth";
+import { admin as adminRoutes } from "./routes/admin"; // <— alias para evitar conflito
+import { companies } from "./routes/companies";
+import { orders } from "./routes/orders";
+
+const app = express();
+
+app.use(
+  cors({
+    origin: [/^http:\/\/localhost:5173$/, /^http:\/\/192\.168\.\d+\.\d+:5173$/],
+    credentials: true,
+  })
+);
+app.use(express.json());
+
+// health
+app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// mounts
+app.use("/auth", auth);
+app.use("/admin", adminRoutes);   // <— use APENAS uma vez
+app.use("/companies", companies);
+app.use("/orders", orders);
+
+const PORT = process.env.PORT || 3333;
 
 async function bootstrap() {
-  const app = express();
-
-  app.use(cors({
-    origin: [process.env.APP_URL || "http://localhost:5173"],
-    credentials: true
-  }));
-  app.use(express.json());
-
-  app.use("/auth", auth);
-
-  app.use("/admin", admin);
-
-  // Exige Token (middleware Require)
-  app.get("/", requireAuth, (_req, res) => res.json({ ok: true }));
-
-  await ensureSchema();
-  const port = Number(process.env.PORT || 3333);
-  app.listen(port, () => console.log(`API on http://localhost:${port}`));
+  try {
+    await ensureSchema();
+    app.listen(PORT, () => console.log(`API on http://localhost:${PORT}`));
+  } catch (e) {
+    console.error("Falha ao iniciar:", e);
+    process.exit(1);
+  }
 }
 
-bootstrap().catch(err => {
-  console.error("Falha ao iniciar:", err);
-  process.exit(1);
-});
+bootstrap();
