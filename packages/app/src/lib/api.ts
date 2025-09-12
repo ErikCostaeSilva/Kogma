@@ -7,11 +7,18 @@ export async function api(path: string, opts: RequestInit = {}) {
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const res = await fetch(`${API}${path}`, { ...opts, headers });
+
   if (res.status === 401) {
-    localStorage.removeItem("token");
+    localStorage.removeItem("token"); localStorage.removeItem("user");
     sessionStorage.setItem("flash", "Sua sessão expirou ou você não está autenticado. Faça login novamente.");
     window.location.href = "/auth/login";
     throw new Error("Não autenticado");
   }
+  if (res.status === 403) {
+    sessionStorage.setItem("flash", "Acesso restrito a administradores.");
+    window.location.href = "/";
+    throw new Error("Acesso negado");
+  }
+
   return res;
 }

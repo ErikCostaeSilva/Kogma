@@ -4,6 +4,7 @@ import cors from "cors";
 import { auth } from "./routes/auth";
 import { ensureSchema } from "./db-init";
 import { requireAuth } from "./middlewares/requireAuth";
+import { admin } from "./routes/admin";
 
 async function bootstrap() {
   const app = express();
@@ -15,6 +16,8 @@ async function bootstrap() {
   app.use(express.json());
 
   app.use("/auth", auth);
+
+  app.use("/admin", admin);
 
   // Exige Token (middleware Require)
   app.get("/", requireAuth, (_req, res) => res.json({ ok: true }));

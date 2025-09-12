@@ -1,6 +1,7 @@
+// layouts/AppLayout.tsx
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "../components/SideBar"; // <- nome/caso certo
+import Sidebar from "../components/SideBar";
 
 export default function AppLayout() {
   return (
