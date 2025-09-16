@@ -7,6 +7,15 @@ import { admin as adminRoutes } from "./routes/admin";
 import { companies } from "./routes/companies";
 import { orders } from "./routes/orders";
 
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
+// CommonJS
+import dotenv from 'dotenv';
+dotenv.config();
+
+
+
 const app = express();
 
 app.use(
@@ -18,6 +27,12 @@ app.use(
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
+app.get('/debug/db', async (req, res) => {
+  const [row]: any = await prisma.$queryRawUnsafe('SELECT DATABASE() as db, @@hostname as host, @@port as port');
+  const masked = String(process.env.DATABASE_URL || '').replace(/(mysql:\/\/)(.*?)(@)/, '$1***$3');
+  res.json({ database: row?.db, host: row?.host, port: row?.port, DATABASE_URL: masked });
+});
 
 app.use("/auth", auth);
 app.use("/admin", adminRoutes);

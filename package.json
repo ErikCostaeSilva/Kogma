@@ -9,10 +9,21 @@
     "install:all": "npm -w packages/app i && npm -w packages/main i",
     "dev": "concurrently \"npm:dev:app\" \"npm:dev:main\"",
     "dev:app": "npm -w packages/app run dev",
-    "dev:main": "npm -w packages/main run dev",
-    "build": "npm -w packages/app run build"
+    "build": "npm -w packages/app run build",
+    "prisma:generate": "prisma generate --schema=packages/prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema=packages/prisma/schema.prisma",
+    "db:seed": "npm run db:seed:run",
+    "db:seed:run": "ts-node -P packages/prisma/tsconfig.seed.json packages/prisma/seed.ts",
+    "dev:main": "dotenv -e packages/main/.env -- ts-node packages/main/src/server.ts"
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "dotenv-cli": "^10.0.0",
+    "prisma": "^6.16.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2"
   }
 }

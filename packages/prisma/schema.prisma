@@ -1,0 +1,121 @@
+// prisma/schema.prisma
+// Schema completo do Projeto Kogma (MySQL 8.0)
+// - Modelos mapeados para as tabelas existentes em snake_case/plural
+// - Enums mapeados para valores em minúsculo/PT-BR quando necessário
+// - Datas que eram DATE no MySQL anotadas com @db.Date
+// - Campos created_at/updated_at com defaults
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// Usuários do sistema (admin e usuários comuns)
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+/// Empresas/clientes
+model Company {
+  id         Int       @id @default(autoincrement())
+  name       String
+  cnpj       String?   @unique
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // Relações
+  orders     Order[]
+
+  @@map("companies")
+}
+
+/// Pedidos de produção
+model Order {
+  id             Int        @id @default(autoincrement())
+  companyId      Int        @map("company_id")
+  title          String
+  qty            Int
+  unit           Unit
+  clientDeadline DateTime?  @db.Date @map("client_deadline")
+  finalDeadline  DateTime?  @db.Date @map("final_deadline")
+  status         Status      @default(OPEN)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  // Relações
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  materials Material[]
+  processes Process[]
+
+  @@index([companyId], map: "idx_orders_company_id")
+  @@map("orders")
+}
+
+/// Materiais associados a um pedido
+model Material {
+  id          Int       @id @default(autoincrement())
+  orderId     Int       @map("order_id")
+  description String
+  qty         Int
+  unit        Unit
+  inStock     Boolean   @default(true) @map("in_stock")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relações
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([orderId], map: "idx_materials_order_id")
+  @@map("materials")
+}
+
+/// Processos/etapas de produção de um pedido
+model Process {
+  id          Int       @id @default(autoincrement())
+  orderId     Int       @map("order_id")
+  name        String
+  plannedDate DateTime? @db.Date @map("planned_date")
+  done        Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relações
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([orderId], map: "idx_processes_order_id")
+  @@map("processes")
+}
+
+/// Papel do usuário
+enum Role {
+  ADMIN @map("admin")
+  USER  @map("user")
+}
+
+/// Unidade de medida (mapeada para PT-BR no banco)
+enum Unit {
+  PECAS @map("Peças")
+  KG
+  M
+  M2
+  M3
+}
+
+/// Status do pedido
+enum Status {
+  OPEN @map("open")
+  LATE @map("late")
+  DONE @map("done")
+}

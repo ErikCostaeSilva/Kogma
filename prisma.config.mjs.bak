@@ -1,0 +1,6 @@
+// prisma.config.mjs
+export default {
+  seed: {
+    command: 'ts-node -P packages/prisma/tsconfig.seed.json packages/prisma/seed.ts'
+  }
+};
