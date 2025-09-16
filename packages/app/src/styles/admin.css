@@ -1,15 +1,24 @@
-.adm .table-head{grid-template-columns:1fr 240px 44px}
-.adm .row{grid-template-columns:1fr 240px 44px}
+.adm .table-head{
+    grid-template-columns:1fr 240px 44px
+}
+.adm .row{
+    grid-template-columns:1fr 240px 44px
+}
 .adm .trash{
-  height:36px;width:36px;border-radius:10px;border:2px solid #dce6f7;background:#fff;cursor:pointer;color:var(--blue-500);
+  height:36px;
+  width:36px;
+  border-radius:10px;
+  border:2px solid #dce6f7;
+  background:#fff;
+  cursor:pointer;
+  color:var(--blue-500);
 }
 .table-body.adminTable .row {
     display: flex;
     justify-content: space-between;
 }
 .table-head.three {
-    display: flex
-;
+    display: flex;
     justify-content: space-between;
     padding: 12px 14px;
 }

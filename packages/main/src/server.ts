@@ -2,9 +2,8 @@ import express from "express";
 import cors from "cors";
 import { ensureSchema } from "./db-init";
 
-// ROTAS
 import { auth } from "./routes/auth";
-import { admin as adminRoutes } from "./routes/admin"; // <— alias para evitar conflito
+import { admin as adminRoutes } from "./routes/admin";
 import { companies } from "./routes/companies";
 import { orders } from "./routes/orders";
 
@@ -18,12 +17,10 @@ app.use(
 );
 app.use(express.json());
 
-// health
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// mounts
 app.use("/auth", auth);
-app.use("/admin", adminRoutes);   // <— use APENAS uma vez
+app.use("/admin", adminRoutes);
 app.use("/companies", companies);
 app.use("/orders", orders);
 

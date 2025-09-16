@@ -8,7 +8,7 @@ export default function RecuperarSenha() {
   const [ok, setOk] = useState(false);
   const [err, setErr] = useState<string|null>(null);
   const [loading, setLoading] = useState(false);
-  const [link, setLink] = useState<string | null>(null); // exibe no modo console
+  const [link, setLink] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,7 +23,7 @@ export default function RecuperarSenha() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Falha ao enviar");
       setOk(true);
-      if (data.link) setLink(data.link); // MAIL_MODE=console => mostra link clicável
+      if (data.link) setLink(data.link);
     } catch (e: any) {
       setErr(e.message);
     } finally {

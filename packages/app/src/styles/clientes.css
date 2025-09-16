@@ -1,6 +1,13 @@
-.clients .table-head{grid-template-columns:1fr 240px}
-.clients .row{grid-template-columns:1fr 240px}
-.clients .row .right{display:flex;justify-content:flex-end}
+.clients .table-head{
+    grid-template-columns:1fr 240px;
+}
+.clients .row{
+    grid-template-columns:1fr 240px;
+}
+.clients .row .right{
+    display:flex;
+    justify-content:flex-end;
+}
 button.btn-primary {
     background-color: #314c7d;
     border: none;
@@ -11,13 +18,11 @@ button.btn-primary {
     border-radius: 22px;
     font-weight: 200;
     cursor: pointer;
-    display: flex
-;
+    display: flex;
     margin: 2em 0;
 }
 .table-head {
-    display: flex
-;
+    display: flex;
     justify-content: space-between;
     padding-right: 13%;
 }

@@ -14,7 +14,6 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Se já estiver logado, redireciona para home
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) navigate("/", { replace: true });

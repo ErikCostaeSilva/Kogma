@@ -22,13 +22,11 @@ export default function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Modais
   const [openAdd, setOpenAdd] = useState(false);
   const [openAdded, setOpenAdded] = useState(false);
   const [confirmDisableId, setConfirmDisableId] = useState<null | number>(null);
   const [pendingStatus, setPendingStatus] = useState<"" | "inactive">("");
 
-  // Form de cadastro
   const [emailNew, setEmailNew] = useState("");
   const [roleNew, setRoleNew] = useState<Role>("user");
   const [err, setErr] = useState<string | null>(null);
@@ -120,13 +118,11 @@ export default function Admin() {
           value={u.status}
           onChange={(e) => {
             const next = e.target.value as Status;
-            // Se está ativo e for mudar para inativo, pede confirmação
             if (u.status === "active" && next === "inactive") {
               setConfirmDisableId(u.id);
               setPendingStatus("inactive");
-              return; // não aplica visualmente ainda (select é controlado por u.status)
+              return; 
             }
-            // Ativar é direto
             setStatus(u.id, next);
           }}
         >
@@ -159,7 +155,6 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Modal: adicionar usuário */}
       <Modal open={openAdd} onClose={() => setOpenAdd(false)} width={650}>
         <div className="modal-title">ADICIONAR USUÁRIO</div>
         <div className="modal-divider" />
@@ -192,7 +187,6 @@ export default function Admin() {
         </div>
       </Modal>
 
-      {/* Modal: sucesso */}
       <Modal open={openAdded} onClose={() => setOpenAdded(false)} width={560}>
         <div className="modal-title center">USUÁRIO ADICIONADO!</div>
         <div className="modal-divider" />
@@ -207,7 +201,6 @@ export default function Admin() {
         </div>
       </Modal>
 
-      {/* Modal: confirmar desabilitar (quando escolher "Inativo" no select) */}
       <Modal
         open={confirmDisableId !== null}
         onClose={() => { setConfirmDisableId(null); setPendingStatus(""); }}

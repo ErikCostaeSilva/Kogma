@@ -4,28 +4,23 @@ import { requireAuth } from "../middlewares/requireAuth";
 
 export const orders = Router();
 
-// exige login
 orders.use(requireAuth);
 
-// helper: aceita "2025-06-23", Date, ou "2025-06-23T00:00:00.000Z" e devolve "2025-06-23"
 function dateOnly(v: any): string | null {
   if (!v) return null;
   if (v instanceof Date && !isNaN(v.getTime())) {
     return v.toISOString().slice(0, 10);
   }
   const s = String(v);
-  // se já vier "YYYY-MM-DD"
+
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // se vier ISO "YYYY-MM-DDTHH:mm:ss.sssZ"
   const m = s.match(/^(\d{4}-\d{2}-\d{2})T/);
   if (m) return m[1];
-  // tenta parse geral
   const d = new Date(s);
   if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
   return null;
 }
 
-// util p/ group
 function groupBy<T extends Record<string, any>>(rows: T[], key: keyof T) {
   const map = new Map<number, T[]>();
   for (const r of rows) {
@@ -36,7 +31,6 @@ function groupBy<T extends Record<string, any>>(rows: T[], key: keyof T) {
   return map;
 }
 
-/** GET /orders?status=open|late|done&q=texto&withMaterials=1 */
 orders.get("/", async (req, res) => {
   const { status, q, withMaterials } = req.query as any;
 
@@ -92,7 +86,6 @@ orders.get("/", async (req, res) => {
   res.json({ orders: out });
 });
 
-/** POST /orders */
 orders.post("/", async (req, res) => {
   const {
     company_id, title, qty = 0, unit = "Unidades",
@@ -153,7 +146,6 @@ orders.post("/", async (req, res) => {
   }
 });
 
-/** PATCH /orders/:id */
 orders.patch("/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ message: "ID inválido" });

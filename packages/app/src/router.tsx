@@ -1,4 +1,3 @@
-// router.tsx
 import { createBrowserRouter } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -14,13 +13,11 @@ import Checklist from "./pages/Checklist";
 import Admin from "./pages/Admin";
 
 export const router = createBrowserRouter([
-  // públicas
   { path: "/auth/login", element: <Login /> },
   { path: "/auth/recuperar-senha", element: <RecuperarSenha /> },
-  { path: "/auth/cadastrar-senha", element: <RecuperarSenha /> }, // alias
+  { path: "/auth/cadastrar-senha", element: <RecuperarSenha /> },
   { path: "/auth/definir-senha", element: <DefinirSenha /> },
 
-  // privadas (um único layout + children)
   {
     path: "/",
     element: (

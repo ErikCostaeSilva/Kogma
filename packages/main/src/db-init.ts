@@ -1,11 +1,10 @@
 import { pool } from "./db";
 
 export async function ensureSchema() {
-  // db selecionado
+
   await pool.query("CREATE DATABASE IF NOT EXISTS metallurgica CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci");
   await pool.query("USE metallurgica");
 
-  // USERS
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -20,7 +19,6 @@ export async function ensureSchema() {
     ) ENGINE=InnoDB;
   `);
 
-  // COMPANIES
   await pool.query(`
     CREATE TABLE IF NOT EXISTS companies (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -30,7 +28,6 @@ export async function ensureSchema() {
     ) ENGINE=InnoDB;
   `);
 
-  // ORDERS
   await pool.query(`
     CREATE TABLE IF NOT EXISTS orders (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,7 +45,6 @@ export async function ensureSchema() {
     ) ENGINE=InnoDB;
   `);
 
-  // ORDER_PROCESSES (processos fixos com data prevista + concluído)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS order_processes (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -61,7 +57,6 @@ export async function ensureSchema() {
     ) ENGINE=InnoDB;
   `);
 
-  // ORDER_MATERIALS
   await pool.query(`
     CREATE TABLE IF NOT EXISTS order_materials (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -75,7 +70,6 @@ export async function ensureSchema() {
     ) ENGINE=InnoDB;
   `);
 
-  // Garante que usuários antigos tenham coluna status (para quem veio de schema anterior)
   const [cols]: any = await pool.query(`
     SELECT COLUMN_NAME FROM information_schema.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'status'

@@ -4,8 +4,6 @@ import StatusFilterPill, { StatusFilterValue } from "../components/StatusFilterP
 import SearchPill from "../components/SearchPill";
 import StatusPillSelect from "../components/StatusPillSelect";
 
-
-
 type OrderMaterial = {
   id?: number;
   order_id?: number;
@@ -23,36 +21,13 @@ type OrderRow = {
   materials: OrderMaterial[];
 };
 
-function StatusPill({ status }: { status: OrderRow["status"] }) {
-  const map = {
-    open: { bg: "#FFF4CC", text: "#9F7A03", label: "Em aberto" },
-    late: { bg: "#FFE2E0", text: "#8F1710", label: "Atrasado" },
-    done: { bg: "#DCF7E8", text: "#0E6A3B", label: "Finalizado" },
-  } as const;
-  const s = map[status];
-  return (
-    <span
-      style={{
-        background: s.bg,
-        color: s.text,
-        padding: "6px 10px",
-        borderRadius: 999,
-        fontWeight: 700,
-        fontSize: 12,
-      }}
-    >
-      {s.label}
-    </span>
-  );
-}
-
 export default function Checklist() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"all" | "open" | "late" | "done">("all");
   const [q, setQ] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [saving, setSaving] = useState<{ [key: string]: boolean }>({}); // salva por item
+  const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
 
   async function load() {
     setLoading(true);
@@ -86,7 +61,6 @@ export default function Checklist() {
   useEffect(() => {
     const t = setTimeout(load, 200);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, q]);
 
   function toggleExpand(id: number) {
@@ -102,14 +76,12 @@ export default function Checklist() {
     if (!res.ok) throw new Error(d?.message || "Falha ao atualizar pedido");
   }
 
-  // Alterna “entregue/em estoque” do material (checkbox)
   async function toggleMaterial(o: OrderRow, idx: number) {
     const key = `mat-${o.id}-${idx}`;
     if (saving[key]) return;
 
     const optimistic = !o.materials[idx].in_stock;
 
-    // Otimismo na UI
     setOrders((list) =>
       list.map((row) =>
         row.id !== o.id
@@ -125,7 +97,6 @@ export default function Checklist() {
 
     setSaving((s) => ({ ...s, [key]: true }));
     try {
-      // backend espera array completo de materials
       const materialsPayload = o.materials.map((m, i) => ({
         description: m.description,
         qty: Number(m.qty || 0),
@@ -134,7 +105,6 @@ export default function Checklist() {
       }));
       await patchOrder(o.id, { materials: materialsPayload });
     } catch (e) {
-      // reverte em caso de erro
       setOrders((list) =>
         list.map((row) =>
           row.id !== o.id
@@ -154,18 +124,16 @@ export default function Checklist() {
     }
   }
 
-  // Atualiza status do pedido (select na linha expandida)
   async function changeStatus(o: OrderRow, next: OrderRow["status"]) {
     const key = `status-${o.id}`;
     if (saving[key]) return;
     const prev = o.status;
     setSaving((s) => ({ ...s, [key]: true }));
-    // otimismo
+
     setOrders((list) => list.map((r) => (r.id === o.id ? { ...r, status: next } : r)));
     try {
       await patchOrder(o.id, { status: next });
     } catch (e) {
-      // reverte
       setOrders((list) => list.map((r) => (r.id === o.id ? { ...r, status: prev } : r)));
       console.error(e);
       alert("Não foi possível atualizar o status.");
@@ -178,7 +146,6 @@ export default function Checklist() {
     <div className="page-wrap checklistTable">
       <h1 className="admin-title">CHECKLIST</h1>
 
-      {/* Filtros topo (componentizados) */}
       <div className="card" style={{ marginBottom: 16 }}>
         <div
           className="card-header"
@@ -194,13 +161,12 @@ export default function Checklist() {
               value={q}
               onChange={setQ}
               placeholder="Pesquisar"
-              onSubmit={() => load()} // opcional: busca imediata no Enter
+              onSubmit={() => load()} 
             />
           </div>
         </div>
       </div>
 
-      {/* Lista */}
       <div className="card">
         <div
           className="table-head"
@@ -231,10 +197,9 @@ export default function Checklist() {
                       {o.title}
                     </div>
                   </div>
-                                    {/* Status rápido (mesmo formato do Pedidos.tsx) */}
                     <div
                       style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}
-                      onClick={(e) => e.stopPropagation()} // evita colapso ao clicar no select
+                      onClick={(e) => e.stopPropagation()} 
                     >
                       <StatusPillSelect
                         value={o.status}
@@ -255,7 +220,6 @@ export default function Checklist() {
                     }}
                   >
 
-                    {/* Materiais */}
                     <div className="table-head-materials" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
                       <div>Material</div>
                       <div style={{ textAlign: "right" }}>Qtd</div>

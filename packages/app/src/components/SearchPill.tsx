@@ -6,7 +6,7 @@ type Props = {
   placeholder?: string;
   className?: string;
   ariaLabel?: string;
-  onSubmit?: () => void; // opcional: dispara ao pressionar Enter
+  onSubmit?: () => void;
 };
 
 export default function SearchPill({
@@ -29,8 +29,6 @@ export default function SearchPill({
           if (e.key === "Enter" && onSubmit) onSubmit();
         }}
       />
-
-      {/* ícone de busca igual ao seu snippet */}
       <svg
         width="25"
         height="25"

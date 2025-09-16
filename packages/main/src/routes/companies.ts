@@ -3,7 +3,6 @@ import { pool } from "../db";
 
 export const companies = Router();
 
-// ---------------- CNPJ helpers ----------------
 function onlyDigits(v: string) { return (v || "").replace(/\D+/g, ""); }
 function isValidCNPJ(v: string) {
   const c = onlyDigits(v);
@@ -22,13 +21,11 @@ function isValidCNPJ(v: string) {
 
   return dv1 === nums[12] && dv2 === nums[13];
 }
-// self-test para evitar futuro “falso inválido”
 if (!isValidCNPJ("50331808000120")) {
   console.warn("[CNPJ] self-test falhou — verifique algoritmo");
 } else {
   console.log("[CNPJ] self-test OK");
 }
-// ------------------------------------------------
 
 companies.get("/", async (_req, res) => {
   const [rows] = await pool.query("SELECT id, name, cnpj FROM companies ORDER BY name ASC");

@@ -37,7 +37,6 @@ export default function StatusFilterPill({
         ))}
       </select>
 
-      {/* seta igual ao seu snippet */}
       <svg
         width="15"
         height="8"

@@ -1,22 +1,40 @@
-/* cabeçalho igual ao Figma (dentro do mesmo card) */
 .pedidos-head .toolbar-3{
   margin-bottom:10px;
   border: none;
 }
 
-/* linha expandida: header dark + timeline + prazo final */
 .order-header{
-  background:var(--blue-600); color:#fff; border-radius:12px 12px 0 0;
-  padding:10px 14px; display:grid;grid-template-columns: 1fr 160px 150px; gap:12px; align-items:center;
+  background:var(--blue-600);
+  color:#fff;
+  border-radius:12px 12px 0 0;
+  padding:10px 14px;
+  display:grid;
+  grid-template-columns: 1fr 160px 150px;
+  gap:12px;
+  align-items:center;
 }
-.order-header .title{display:flex;gap:16px;align-items:center;font-weight:700}
-.order-header .title .company{opacity:.95}
-.order-header .title .order{opacity:.95}
+.order-header .title{
+  display:flex;
+  gap:16px;
+  align-items:center;
+  font-weight:700;
+}
+.order-header .title .company{
+  opacity:.95
+}
+.order-header .title .order{
+  opacity:.95
+}
 
 .order-expanded{
-  background:#ffffff; border-radius:0 0 12px 12px; border:1px solid #e8eef8;
-  padding: 8px 12px; margin-top:-8px;
-  display:grid; grid-template-columns: 1fr 160px; gap:16px;
+  background:#ffffff;
+  border-radius:0 0 12px 12px;
+  border:1px solid #e8eef8;
+  padding: 8px 12px;
+  margin-top:-8px;
+  display:grid;
+  grid-template-columns: 1fr 160px;
+  gap:16px;
 }
 .deadline-card .label {
     font-size: 1.6em;
@@ -25,12 +43,15 @@
     color: #2f4f82;
     opacity: 1;
 }
-/* timeline */
 .timeline-card{
-  background:#fff;border-radius:12px;padding: 0px 18px 6px;
+  background:#fff;
+  border-radius:12px;
+  padding: 0px 18px 6px;
 }
 .process-timeline{
-  position:relative; height:36px; margin:8px 6px 0px;
+  position:relative;
+  height:36px;
+  margin:8px 6px 0px;
 }
 .process-timeline .track {
     position: absolute;
@@ -42,16 +63,35 @@
     border-radius: 4px;
 }
 .process-timeline .fill{
-  position:absolute; left:2%; top:17px; height:4px; background:var(--blue-600); border-radius:4px; width:0%;
+  position:absolute;
+  left:2%;
+  top:17px;
+  height:4px;
+  background:var(--blue-600);
+  border-radius:4px;
+  width:0%;
   transition:width .25s ease;
 }
 .process-dot{
-  position:absolute; top:8px; width:18px; height:18px; border-radius:50%;
-  background:#fff; border:3px solid #e0e8f7; transform:translateX(-50%);
+  position:absolute;
+  top:8px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#fff;
+  border:3px solid #e0e8f7;
+  transform:translateX(-50%);
 }
-.process-dot.done{border-color:var(--blue-600); background:var(--blue-600)}
+.process-dot.done{
+  border-color:var(--blue-600);
+  background:var(--blue-600)
+}
 .process-grid{
-  display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-top:0px; text-align:center;
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:10px;
+  margin-top:0px;
+  text-align:center;
 }
 .process-name {
     font-weight: 400;
@@ -64,24 +104,23 @@
     font-weight: 100;
 }
 
-/* prazo final card */
 .deadline-card {
     background: transparent;
     color: #2f4f82;
-    display: flex
-;
+    display: flex;
     border-radius: 0;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
-.deadline-card .label{opacity:.85;font-size:14px}
+.deadline-card .label{
+  opacity:.85;
+  font-size:14px
+}
 .deadline-card .value {
     font-weight: 200;
     font-size: 27px;
 }
-
-/* lista compacta (não expandida) */
 .order-row{
   grid-template-columns: 1fr 160px 150px;
 }
@@ -90,13 +129,23 @@
   display: flex;
   gap: 5em;
 }
-.order-compact .company{font-weight:800}
-.order-compact .order{opacity:.85; font-size:14px}
+.order-compact .company{
+  font-weight:800;
+}
+.order-compact .order{
+  opacity:.85;
+  font-size:14px
+}
 
-/* status cores coerentes */
-.status-select[value="open"]{background:var(--warning)}
-.status-select[value="late"]{background:var(--danger)}
-.status-select[value="done"]{background:var(--success)}
+.status-select[value="open"]{
+  background:var(--warning)
+}
+.status-select[value="late"]{
+  background:var(--danger)
+}
+.status-select[value="done"]{
+  background:var(--success)
+}
 .table-headFull {
     border-bottom: 1px solid #0000002e;
 }

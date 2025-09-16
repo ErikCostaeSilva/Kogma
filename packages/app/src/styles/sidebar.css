@@ -19,7 +19,10 @@
   padding:22px 0;
 }
 .sidebar .logo{
-  font-weight:900; font-size:34px; letter-spacing:1px; margin:4px 8px 10px;
+  font-weight:900;
+  font-size:34px;
+  letter-spacing:1px;
+  margin:4px 8px 10px;
 }
 .sidebar nav { 
   display:flex; 
@@ -42,11 +45,19 @@ button.nav-link.logout {
     padding: 0.8em 15%;
     cursor: pointer;
 }
-.sidebar a:hover, button.nav-link.logout:hover{ background:#2e5084 }
-.sidebar a.active{ background:#3a5a90; }
+.sidebar a:hover, button.nav-link.logout:hover{
+  background:#2e5084
+}
+.sidebar a.active{
+  background:#3a5a90;
+}
 
 .page-wrap .admin-title{
-  margin:0 0 14px; color:#294674; font-weight:900; letter-spacing:.5px; font-size:36px;
+  margin:0 0 14px;
+  color:#294674;
+  font-weight:900;
+  letter-spacing:.5px;
+  font-size:36px;
 }
 .sidebar-brand {
     font-size: 2.8em;

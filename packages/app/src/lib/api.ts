@@ -1,6 +1,5 @@
 const BASE = (import.meta.env.VITE_API_URL || "http://localhost:3333").replace(/\/$/, "");
 
-// tenta pegar token nas chaves novas e antigas
 function getToken() {
   return (
     localStorage.getItem("auth:token") ||
@@ -15,12 +14,7 @@ export async function api(path: string, opts: RequestInit = {}) {
   const headers = new Headers(opts.headers || {});
   const token = getToken();
 
-  // sempre aceita JSON
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
-
-  // seta Content-Type: application/json somente quando:
-  // - existe body
-  // - body não é FormData (deixe o browser definir o boundary)
   const hasBody = typeof opts.body !== "undefined" && opts.body !== null;
   const isFormData =
     typeof FormData !== "undefined" && hasBody && opts.body instanceof FormData;
@@ -31,11 +25,10 @@ export async function api(path: string, opts: RequestInit = {}) {
 
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  // mantém o mesmo contrato: retorna o Response
   const res = await fetch(url, { ...opts, headers });
 
   if (res.status === 401) {
-    // limpa chaves novas e antigas
+
     localStorage.removeItem("auth:token");
     localStorage.removeItem("auth:user");
     localStorage.removeItem("token");

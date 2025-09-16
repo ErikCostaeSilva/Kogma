@@ -1,17 +1,36 @@
-/* ícones de ação */
 .icon-btn{
-  width:38px;height:38px;border-radius:10px;
-  border:1px solid #dbe6f6;background:#fff;color:#2a3f66;
-  display:grid;place-items:center; cursor:pointer;
+  width:38px;
+  height:38px;
+  border-radius:10px;
+  border:1px solid #dbe6f6;
+  background:#fff;
+  color:#2a3f66;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
 }
-.icon-btn:hover{ background:#f2f6fc }
+.icon-btn:hover{ 
+  background:#f2f6fc 
+}
 
-/* pílula de status (select) */
-.status-pill{ display:inline-flex }
-.status-select{
-  appearance:none; -webkit-appearance:none;
-  padding:10px 14px;border-radius:12px;border:none;font-weight:800; cursor:pointer;
+.status-pill{ 
+  display:inline-flex;
 }
-.status-select[value="open"]{ background:#F2DA6E; color:#2E3E63; }
-.status-select[value="late"]{ background:#F6A19B; color:#2E3E63; }
-.status-select[value="done"]{ background:#87D3AB; color:#2E3E63; }
+.status-select{
+  appearance:none;
+  -webkit-appearance:none;
+  padding:10px 14px;
+  border-radius:12px;
+  border:none;
+  font-weight:800;
+  cursor:pointer;
+}
+.status-select[value="open"]{ 
+  background:#F2DA6E; color:#2E3E63; 
+}
+.status-select[value="late"]{
+  background:#F6A19B; color:#2E3E63; 
+}
+.status-select[value="done"]{
+  background:#87D3AB; color:#2E3E63; 
+}

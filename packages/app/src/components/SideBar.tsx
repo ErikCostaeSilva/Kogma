@@ -60,8 +60,6 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">KOGMA</div>
-
-      {/* bloco do usuário (igual à referência) */}
       <div className="user-block">
         <div className="user-avatar" />
       </div>

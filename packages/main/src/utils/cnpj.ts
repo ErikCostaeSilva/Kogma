@@ -1,14 +1,11 @@
-// utils/cnpj.ts
-/** Mantém só dígitos */
 export function normalizeCNPJ(v: string) {
   return (v || "").replace(/\D+/g, "");
 }
 
-/** Validação oficial do CNPJ (14 dígitos, dígitos verificadores por peso) */
 export function isValidCNPJ(value: string) {
   const c = normalizeCNPJ(value);
   if (c.length !== 14) return false;
-  if (/^(\d)\1+$/.test(c)) return false; // todos iguais
+  if (/^(\d)\1+$/.test(c)) return false;
 
   const base1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
   const base2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];

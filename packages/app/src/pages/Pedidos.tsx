@@ -2,21 +2,20 @@ import React, { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import StatusFilterPill, { StatusFilterValue } from "../components/StatusFilterPill";
 import SearchPill from "../components/SearchPill";
-/** ===== Tipos ===== */
 type Company = { id: number; name: string; cnpj: string };
 
 type ProcessItem = {
   name: string;
   planned_date: string | null;
   done?: boolean;
-  selected?: boolean; // usado no passo 2 (escolha de processos)
+  selected?: boolean;
 };
 
 type MaterialItem = {
   description: string;
   qty: number;
   unit: "Peças" | "KG" | "M" | "M2" | "M3";
-  request?: boolean; // true => não está em estoque (in_stock=false)
+  request?: boolean;
 };
 
 type OrderRow = {
@@ -26,14 +25,13 @@ type OrderRow = {
   title: string;
   qty: number;
   unit: MaterialItem["unit"];
-  client_deadline: string | null; // YYYY-MM-DD
-  final_deadline: string | null;  // YYYY-MM-DD
+  client_deadline: string | null;
+  final_deadline: string | null;
   status: "open" | "late" | "done";
   processes: ProcessItem[];
   materials: { description: string; qty: number; unit: MaterialItem["unit"]; in_stock: boolean }[];
 };
 
-/** ===== Constantes/Helpers ===== */
 const ALL_UNITS: MaterialItem["unit"][] = ["Peças", "KG", "M", "M2", "M3"];
 const ALL_PROCESSES = ["Corte a laser", "Calandragem", "Dobra", "Montagem", "Soldagem", "Pintura"] as const;
 
@@ -57,12 +55,10 @@ function toDbDate(input: string | null | undefined) {
 }
 function toBrDate(d?: string | null) {
   if (!d) return "—";
-  // já estiver ISO
   let iso = "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
     iso = d;
   } else {
-    // tenta normalizar usando o helper existente
     iso = toInputDate(d);
   }
   if (!iso) return "—";
@@ -70,12 +66,9 @@ function toBrDate(d?: string | null) {
   return `${day}/${m}/${y}`;
 }
 
-/** ===== Validação de datas (NOVO) ===== */
-// === [VAL] limites ajustáveis
 const DATE_MIN = "1900-01-01";
 const DATE_MAX = "2100-12-31";
 
-// === [VAL] valida se é um ISO válido sem estourar por fuso
 function isValidISODate(iso?: string | null): boolean {
   if (!iso) return false;
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
@@ -90,19 +83,18 @@ function isValidISODate(iso?: string | null): boolean {
     dt.getUTCDate() === d
   );
 }
-// === [VAL] como é YYYY-MM-DD, comparação de string funciona
+
 function isWithinRangeISO(iso: string, min = DATE_MIN, max = DATE_MAX) {
   return iso >= min && iso <= max;
 }
-// === [VAL] função de erro humanizado
+
 function validateISODateField(iso?: string | null, label = "Data") {
-  if (!iso) return undefined; // deixe obrigatório em cada fluxo onde fizer sentido
+  if (!iso) return undefined;
   if (!isValidISODate(iso)) return `${label}: inválida (use AAAA-MM-DD)`;
   if (!isWithinRangeISO(iso)) return `${label}: fora do intervalo permitido (${DATE_MIN} a ${DATE_MAX})`;
   return undefined;
 }
 
-/** ====== UI Atômicos ====== */
 function StatusPillSelect({
   value,
   onChange,
@@ -116,12 +108,12 @@ function StatusPillSelect({
         style={{
       backgroundColor:
         value === "late"
-          ? "#f6a19b" // vermelho
+          ? "#f6a19b" 
           : value === "open"
-          ? "#f2da6e" // amarelo
+          ? "#f2da6e" 
           : value === "done"
-          ? "#87d3ab" // verde
-          : "#fff",   // padrão
+          ? "#87d3ab" 
+          : "#fff",   
     }}
         value={value}
         onChange={(e) => onChange(e.target.value as any)}
@@ -167,12 +159,10 @@ export default function Pedidos() {
   const [q, setQ] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  /** modais */
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [mode, setMode] = useState<"create" | "edit" | "manage-process">("create");
   const [targetId, setTargetId] = useState<number | null>(null);
 
-  /** draft para criar/editar */
   const emptyDraft = useMemo(
     () => ({
       company_id: 0,
@@ -194,21 +184,19 @@ export default function Pedidos() {
   const [draft, setDraft] = useState(emptyDraft);
   const [saving, setSaving] = useState(false);
 
-  // === [VAL] estado de erros de data
+
   const [dateErrors, setDateErrors] = useState<{
     client_deadline?: string;
     final_deadline?: string;
     processes: Record<number, string | undefined>;
   }>({ processes: {} });
 
-  /** ====== Carregamento ====== */
   useEffect(() => {
     loadCompanies();
   }, []);
   useEffect(() => {
     const t = setTimeout(loadOrders, 120);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, q]);
 
   async function loadCompanies() {
@@ -256,7 +244,6 @@ export default function Pedidos() {
     }
   }
 
-  /** ====== Helpers de estado ====== */
   const toggleExpand = (id: number) =>
     setExpandedId((cur) => (cur === id ? null : id));
 
@@ -264,12 +251,11 @@ export default function Pedidos() {
     setOrders((list) => list.map((o) => (o.id === id ? { ...o, ...patch } : o)));
   };
 
-  /** ====== Ações topo ====== */
   function openNew() {
     setMode("create");
     setTargetId(null);
     setDraft(emptyDraft);
-    setDateErrors({ processes: {} }); // === [VAL] limpa erros
+    setDateErrors({ processes: {} });
     setStep(1);
   }
   function openEdit(o: OrderRow) {
@@ -307,7 +293,7 @@ export default function Pedidos() {
         request: !m.in_stock,
       })),
     });
-    setDateErrors({ processes: {} }); // === [VAL] limpa erros
+    setDateErrors({ processes: {} });
     setStep(1);
   }
   function openProcesses(o: OrderRow) {
@@ -332,7 +318,7 @@ export default function Pedidos() {
       }),
       materials: [],
     });
-    setDateErrors({ processes: {} }); // === [VAL] limpa erros
+    setDateErrors({ processes: {} });
     setStep(2);
   }
 
@@ -348,13 +334,11 @@ export default function Pedidos() {
     }
   }
 
-  /** ====== Fluxo dos modais ====== */
   function finishStep1() {
     if (!draft.company_id || !draft.title.trim()) {
       alert("Preencha Empresa e Pedido.");
       return;
     }
-    // === [VAL] valida Prazo do Cliente
     const iso = toInputDate(draft.client_deadline);
     const err = validateISODateField(iso, "Prazo do Cliente");
     setDateErrors((prev) => ({ ...prev, client_deadline: err }));
@@ -365,7 +349,6 @@ export default function Pedidos() {
     setStep(2);
   }
   function finishStep2() {
-    // === [VAL] valida todas as datas selecionadas + prazo final
     let firstErr: string | undefined;
     const procErrors: Record<number, string | undefined> = {};
     draft.processes.forEach((p, idx) => {
@@ -392,7 +375,6 @@ export default function Pedidos() {
   async function persistOrder() {
     setSaving(true);
 
-    // === [VAL] última verificação antes de persistir
     {
       let firstErr: string | undefined;
 
@@ -455,7 +437,6 @@ export default function Pedidos() {
 
         const newId = data.id as number;
 
-        // processos + prazo final
         const patch1 = { processes: processesPayload, final_deadline: toDbDate(draft.final_deadline) };
         const r1 = await api(`/orders/${newId}`, { method: "PATCH", body: JSON.stringify(patch1) });
         if (!r1.ok) throw new Error(await r1.text());
@@ -476,7 +457,6 @@ export default function Pedidos() {
 
       if (!targetId) return;
 
-      // === Atualização otimista ===
       if (mode === "edit") {
         const optimisticProcesses: ProcessItem[] = processesPayload.map((p) => ({
           name: p.name,
@@ -496,7 +476,7 @@ export default function Pedidos() {
             description: m.description,
             qty: m.qty,
             unit: m.unit,
-            in_stock: !(!m.in_stock), // mantém shape
+            in_stock: !(!m.in_stock),
           })),
         } as any);
       }
@@ -512,7 +492,6 @@ export default function Pedidos() {
         });
       }
 
-      // === Persistência real ===
       if (mode === "edit") {
         const rBase = await api(`/orders/${targetId}`, {
           method: "PATCH",
@@ -559,7 +538,6 @@ export default function Pedidos() {
 
       <div className="card pedidos-head">
 
-        {/* Toolbar dentro do mesmo card (filtro, busca, botão) */}
        <div className="toolbar-3">
   <StatusFilterPill
     value={status as StatusFilterValue}
@@ -570,14 +548,11 @@ export default function Pedidos() {
     value={q}
     onChange={setQ}
     placeholder="Pesquisar"
-    // opcional: se quiser forçar busca no Enter imediatamente
-    // onSubmit={() => {/* se precisar algo extra além do useEffect */}}
   />
 
   <button className="pill-btn" onClick={openNew}>Novo Pedido</button>
 </div>
 
-        {/* Lista */}
         <div className="table-body">
           {loading ? (
             <div className="helper">Carregando...</div>
@@ -609,7 +584,6 @@ export default function Pedidos() {
         </div>
       </div>
 
-      {/* ==== Modal Passo 1 ==== */}
       {step === 1 && (
         <Modal title={mode === "edit" ? "EDITAR PEDIDO" : "NOVO PEDIDO"} onClose={() => setStep(0)}>
           <div className="grid-2">
@@ -669,10 +643,10 @@ export default function Pedidos() {
                 <input
                   className="input line"
                   type="date"
-                  min={DATE_MIN} // === [VAL]
-                  max={DATE_MAX} // === [VAL]
+                  min={DATE_MIN} 
+                  max={DATE_MAX} 
                   value={toInputDate(draft.client_deadline)}
-                  aria-invalid={!!dateErrors.client_deadline} // === [VAL]
+                  aria-invalid={!!dateErrors.client_deadline} 
                   onChange={(e) => {
                     const v = e.target.value;
                     setDraft((d) => ({ ...d, client_deadline: v }));
@@ -696,7 +670,6 @@ export default function Pedidos() {
         </Modal>
       )}
 
-      {/* ==== Modal Passo 2 ==== */}
       {step === 2 && (
         <Modal title="ADMINISTRAR PRAZOS" onClose={() => setStep(0)}>
           <div className="grid-3">
@@ -718,7 +691,6 @@ export default function Pedidos() {
                     {p.name}
                   </label>
 
-                  {/* Somente no modo da prancheta mostramos "Concluído" */}
                   {mode === "manage-process" && p.selected && (
                     <label style={{ display:"flex", gap:6, alignItems:"center", fontSize:13 }}>
                       <input
@@ -743,16 +715,15 @@ export default function Pedidos() {
                     className="input line"
                     type="date"
                     disabled={!p.selected}
-                    min={DATE_MIN} // === [VAL]
-                    max={DATE_MAX} // === [VAL]
+                    min={DATE_MIN} 
+                    max={DATE_MAX} 
                     value={toInputDate(p.planned_date)}
-                    aria-invalid={!!dateErrors.processes[idx]} // === [VAL]
+                    aria-invalid={!!dateErrors.processes[idx]} 
                     onChange={(e) =>
                       setDraft((d) => {
                         const v = e.target.value;
                         const arr = [...d.processes];
                         arr[idx] = { ...arr[idx], planned_date: v };
-                        // === [VAL] valida cada processo
                         setDateErrors((prev) => ({
                           ...prev,
                           processes: {
@@ -778,10 +749,10 @@ export default function Pedidos() {
                 <input
                   className="input line"
                   type="date"
-                  min={DATE_MIN} // === [VAL]
-                  max={DATE_MAX} // === [VAL]
+                  min={DATE_MIN} 
+                  max={DATE_MAX} 
                   value={toInputDate(draft.final_deadline)}
-                  aria-invalid={!!dateErrors.final_deadline} // === [VAL]
+                  aria-invalid={!!dateErrors.final_deadline}
                   onChange={(e) => {
                     const v = e.target.value;
                     setDraft((d) => ({ ...d, final_deadline: v }));
@@ -811,7 +782,6 @@ export default function Pedidos() {
         </Modal>
       )}
 
-      {/* ==== Modal Passo 3 ==== */}
       {step === 3 && (
         <Modal title="MATERIAIS" onClose={() => setStep(0)}>
           <div className="materials-grid-head" style={{ display:"grid", gridTemplateColumns:"1fr 150px 180px 100px", gap:12, fontWeight:800, color:"#2a3f66", marginBottom:8 }}>
@@ -920,8 +890,6 @@ export default function Pedidos() {
   );
 }
 
-/** ====== Componentes auxiliares ====== */
-
 function CompactOrderRow({
   order,
   onToggle,
@@ -984,7 +952,6 @@ function ExpandedOrderCard({
 }) {
   return (
     <div className="row" style={{ padding: 0 }}>
-      {/* Header escuro (clique para recolher) */}
       <div className="order-header" onClick={onToggle} style={{ cursor: "pointer" }}>
         <div className="title">
           <div className="company">{order.company_name}</div>
@@ -1014,7 +981,6 @@ function ExpandedOrderCard({
         </div>
       </div>
 
-      {/* Conteúdo expandido: timeline + prazo final */}
       <div className="order-expanded">
         <div className="timeline-card">
           <Timeline processes={order.processes} />
@@ -1040,30 +1006,25 @@ function ExpandedOrderCard({
   );
 }
 
-/** ===== Timeline visual (posições customizadas) ===== */
-const CUSTOM_STEP_POS = [7, 24, 42, 58, 76, 92]; // em %
+const CUSTOM_STEP_POS = [7, 24, 42, 58, 76, 92]; 
 
-/** ===== Timeline visual (posições customizadas + fill inicia em 2%) ===== */
 function Timeline({ processes }: { processes: ProcessItem[] }) {
-  const CUSTOM_STEP_POS = [7, 24, 42, 58, 76, 92]; // em %
-  const START_OFFSET = 2; // fill começa em 2%
+  const CUSTOM_STEP_POS = [7, 24, 42, 58, 76, 92]; 
+  const START_OFFSET = 2; 
 
   const steps = [...ALL_PROCESSES].map((name) => {
     const hit = processes.find((p) => p.name === name);
     return { name, done: !!hit?.done };
   });
 
-  // Usa só a quantidade necessária de posições
   const positions = CUSTOM_STEP_POS.slice(0, steps.length);
 
-  // Último índice concluído em sequência (do início até quebrar)
   let lastDone = -1;
   for (let i = 0; i < steps.length; i++) {
     if (steps[i].done) lastDone = i;
     else break;
   }
 
-  // Cálculo do fill: parte de 2% e vai até a última bolinha concluída
   const lastPos = lastDone >= 0 ? positions[lastDone] : START_OFFSET;
   const fillLeft = START_OFFSET;
   const fillWidth = Math.max(0, lastPos - START_OFFSET);
@@ -1084,8 +1045,6 @@ function Timeline({ processes }: { processes: ProcessItem[] }) {
   );
 }
 
-
-/** ===== Modal base ===== */
 function Modal({
   title,
   children,

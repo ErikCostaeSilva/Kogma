@@ -1,5 +1,3 @@
-// Fallback caso o TS não resolva @types/bcryptjs no workspace.
-// Se @types/bcryptjs estiver instalado, isso não atrapalha.
 declare module "bcryptjs" {
   export function genSaltSync(rounds?: number): string;
   export function hashSync(s: string, salt?: string): string;

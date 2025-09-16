@@ -3,7 +3,6 @@ body.app {
   color:#2a3f66;
 }
 
-/* quando a linha estiver expandida, o cabeçalho azul do cartão */
 .row.expanded-header{
   background:#2e4775;
   color:#fff;

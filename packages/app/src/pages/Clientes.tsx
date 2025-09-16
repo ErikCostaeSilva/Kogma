@@ -16,7 +16,7 @@ function Modal({ open, onClose, children, width=640 }:{
   );
 }
 
-/** Formata progressivamente para 00.000.000/0000-00 */
+/* Formata progressivamente p/ 00.000.000/0000-00 */
 function formatCNPJ(input: string) {
   const d = (input || "").replace(/\D/g, "").slice(0,14);
   const p1 = d.slice(0,2);
