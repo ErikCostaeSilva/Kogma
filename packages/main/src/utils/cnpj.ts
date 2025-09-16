@@ -1,24 +1,51 @@
-export function normalizeCNPJ(v: string) {
-  return (v || "").replace(/\D+/g, "");
+// packages/main/src/utils/cnpj.ts
+export function onlyDigits(s: any): string {
+  return String(s ?? "").replace(/\D+/g, "");
 }
 
-export function isValidCNPJ(value: string) {
-  const c = normalizeCNPJ(value);
-  if (c.length !== 14) return false;
-  if (/^(\d)\1+$/.test(c)) return false;
+export function cnpjSanitize(input: any): string | null {
+  const d = onlyDigits(input);
+  return d.length === 14 ? d : null;
+}
 
-  const base1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const base2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+// Validação mod 11 padrão do CNPJ
+export function cnpjIsValid(cnpjRaw: any): boolean {
+  let cnpj = onlyDigits(cnpjRaw);
+  if (cnpj.length !== 14) return false;
 
-  const toInt = (ch: string) => ch.charCodeAt(0) - 48;
+  // rejeita sequências repetidas
+  if (/^(\d)\1+$/.test(cnpj)) return false;
 
-  let sum1 = 0;
-  for (let i = 0; i < 12; i++) sum1 += toInt(c[i]) * base1[i];
-  const dv1 = sum1 % 11 < 2 ? 0 : 11 - (sum1 % 11);
+  const calc = (base: string): number => {
+    const nums = base.split("").map(Number);
+    const factors =
+      base.length === 12
+        ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const sum = nums.reduce((acc, n, i) => acc + n * factors[i], 0);
+    const rest = sum % 11;
+    return rest < 2 ? 0 : 11 - rest;
+  };
 
-  let sum2 = 0;
-  for (let i = 0; i < 13; i++) sum2 += toInt(c[i]) * base2[i];
-  const dv2 = sum2 % 11 < 2 ? 0 : 11 - (sum2 % 11);
+  const base12 = cnpj.slice(0, 12);
+  const d1 = calc(base12);
+  const d2 = calc(base12 + d1);
+  return cnpj === base12 + String(d1) + String(d2);
+}
 
-  return dv1 === toInt(c[12]) && dv2 === toInt(c[13]);
+export function normalizeCnpjForDb(
+  input: any,
+  strict = false
+): { value: string | null; error?: string } {
+  const digits = onlyDigits(input);
+  if (!digits) return { value: null }; // vazio
+  if (digits.length !== 14) {
+    return strict
+      ? { value: null, error: "CNPJ deve ter 14 dígitos" }
+      : { value: digits.padStart(14, "0") }; // relaxado: tenta normalizar
+  }
+  if (strict && !cnpjIsValid(digits)) {
+    return { value: null, error: "CNPJ inválido" };
+  }
+  return { value: digits };
 }

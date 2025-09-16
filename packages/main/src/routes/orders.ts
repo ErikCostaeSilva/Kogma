@@ -1,18 +1,16 @@
+// packages/main/src/routes/orders.ts
 import { Router } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middlewares/requireAuth";
 
 export const orders = Router();
-
 orders.use(requireAuth);
 
 function dateOnly(v: any): string | null {
   if (!v) return null;
-  if (v instanceof Date && !isNaN(v.getTime())) {
+  if (v instanceof Date && !isNaN(v.getTime()))
     return v.toISOString().slice(0, 10);
-  }
   const s = String(v);
-
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   const m = s.match(/^(\d{4}-\d{2}-\d{2})T/);
   if (m) return m[1];
@@ -33,11 +31,11 @@ function groupBy<T extends Record<string, any>>(rows: T[], key: keyof T) {
 
 orders.get("/", async (req, res) => {
   const { status, q, withMaterials } = req.query as any;
-
   const where: string[] = [];
   const vals: any[] = [];
   if (status && ["open", "late", "done"].includes(status)) {
-    where.push("o.status=?"); vals.push(status);
+    where.push("o.status=?");
+    vals.push(status);
   }
   if (q) {
     where.push("(o.title LIKE ? OR c.name LIKE ?)");
@@ -56,21 +54,21 @@ orders.get("/", async (req, res) => {
   );
 
   if (!withMaterials) return res.json({ orders: rows });
-
   const ids = rows.map((r: any) => r.id);
   if (!ids.length) return res.json({ orders: [] });
 
   const [procs]: any = await pool.query(
     `SELECT id, order_id, name, planned_date, done
-     FROM order_processes
-     WHERE order_id IN (?)
-     ORDER BY FIELD(name,'Corte a laser','Calandragem','Dobra','Montagem','Soldagem','Pintura')`,
+       FROM processes
+      WHERE order_id IN (?)
+      ORDER BY FIELD(name,'Corte a laser','Calandragem','Dobra','Montagem','Soldagem','Pintura')`,
     [ids]
   );
+
   const [mats]: any = await pool.query(
     `SELECT id, order_id, description, qty, unit, in_stock
-     FROM order_materials
-     WHERE order_id IN (?)`,
+       FROM materials
+      WHERE order_id IN (?)`,
     [ids]
   );
 
@@ -88,50 +86,75 @@ orders.get("/", async (req, res) => {
 
 orders.post("/", async (req, res) => {
   const {
-    company_id, title, qty = 0, unit = "Unidades",
-    client_deadline, final_deadline, status = "open",
-    materials = [], processes = []
+    company_id,
+    title,
+    qty = 0,
+    unit = "Unidades",
+    client_deadline,
+    final_deadline,
+    status = "open",
+    materials = [],
+    processes = [],
   } = req.body || {};
 
   if (!company_id || !title) {
-    return res.status(400).json({ message: "company_id e title são obrigatórios" });
+    return res
+      .status(400)
+      .json({ message: "company_id e title são obrigatórios" });
   }
 
   const clientD = dateOnly(client_deadline);
-  const finalD  = dateOnly(final_deadline);
+  const finalD = dateOnly(final_deadline);
 
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
     const [ins]: any = await conn.query(
-      `INSERT INTO orders (company_id, title, qty, unit, client_deadline, final_deadline, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (company_id, title, qty, unit, client_deadline, final_deadline, status, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
       [company_id, title, qty, unit, clientD, finalD, status]
     );
     const orderId = ins.insertId;
 
     const defaultProcs = [
-      "Corte a laser", "Calandragem", "Dobra", "Montagem", "Soldagem", "Pintura"
-    ].map(n => ({ name: n, planned_date: null, done: 0 }));
+      "Corte a laser",
+      "Calandragem",
+      "Dobra",
+      "Montagem",
+      "Soldagem",
+      "Pintura",
+    ].map((n) => ({ name: n, planned_date: null, done: 0 }));
 
-    const toInsertProcs = (processes?.length ? processes : defaultProcs).map((p: any) => [
-      orderId, p.name, dateOnly(p.planned_date), p.done ? 1 : 0
-    ]);
-    if (toInsertProcs.length) {
+    // >>> ALTERADO: inserir updated_at nos processos <<<
+    const valuesProcs = (processes?.length ? processes : defaultProcs).map(
+      (p: any) => [
+        orderId,
+        p.name,
+        dateOnly(p.planned_date),
+        p.done ? 1 : 0,
+        new Date(),
+      ]
+    );
+    if (valuesProcs.length) {
       await conn.query(
-        `INSERT INTO order_processes (order_id, name, planned_date, done) VALUES ?`,
-        [toInsertProcs]
+        `INSERT INTO processes (order_id, name, planned_date, done, updated_at) VALUES ?`,
+        [valuesProcs]
       );
     }
 
     if (materials?.length) {
-      const toInsertMats = materials.map((m: any) => [
-        orderId, m.description, m.qty || 0, m.unit || "Peças", m.in_stock ? 1 : 0
+      const valuesMats = materials.map((m: any) => [
+        orderId,
+        m.description,
+        m.qty || 0,
+        m.unit || "Peças",
+        m.in_stock ? 1 : 0,
+        new Date(), // updated_at
       ]);
       await conn.query(
-        `INSERT INTO order_materials (order_id, description, qty, unit, in_stock) VALUES ?`,
-        [toInsertMats]
+        `INSERT INTO materials (order_id, description, qty, unit, in_stock, updated_at) VALUES ?`,
+        [valuesMats]
       );
     }
 
@@ -151,9 +174,15 @@ orders.patch("/:id", async (req, res) => {
   if (!id) return res.status(400).json({ message: "ID inválido" });
 
   const {
-    company_id, title, qty, unit,
-    client_deadline, final_deadline, status,
-    processes, materials
+    company_id,
+    title,
+    qty,
+    unit,
+    client_deadline,
+    final_deadline,
+    status,
+    processes,
+    materials,
   } = req.body || {};
 
   const conn = await pool.getConnection();
@@ -163,41 +192,72 @@ orders.patch("/:id", async (req, res) => {
     const sets: string[] = [];
     const vals: any[] = [];
 
-    if (company_id !== undefined) { sets.push("company_id=?"); vals.push(company_id); }
-    if (title !== undefined)      { sets.push("title=?"); vals.push(title); }
-    if (qty !== undefined)        { sets.push("qty=?"); vals.push(qty); }
-    if (unit !== undefined)       { sets.push("unit=?"); vals.push(unit); }
-
+    if (company_id !== undefined) {
+      sets.push("company_id=?");
+      vals.push(company_id);
+    }
+    if (title !== undefined) {
+      sets.push("title=?");
+      vals.push(title);
+    }
+    if (qty !== undefined) {
+      sets.push("qty=?");
+      vals.push(qty);
+    }
+    if (unit !== undefined) {
+      sets.push("unit=?");
+      vals.push(unit);
+    }
     if (client_deadline !== undefined) {
-      sets.push("client_deadline=?"); vals.push(dateOnly(client_deadline));
+      sets.push("client_deadline=?");
+      vals.push(dateOnly(client_deadline));
     }
     if (final_deadline !== undefined) {
-      sets.push("final_deadline=?"); vals.push(dateOnly(final_deadline));
+      sets.push("final_deadline=?");
+      vals.push(dateOnly(final_deadline));
     }
-    if (status !== undefined)     { sets.push("status=?"); vals.push(status); }
+    if (status !== undefined) {
+      sets.push("status=?");
+      vals.push(status);
+    }
 
     if (sets.length) {
+      sets.push("updated_at=NOW()");
       vals.push(id);
       await conn.query(`UPDATE orders SET ${sets.join(", ")} WHERE id=?`, vals);
     }
 
     if (Array.isArray(processes)) {
-      await conn.query(`DELETE FROM order_processes WHERE order_id=?`, [id]);
+      await conn.query(`DELETE FROM processes WHERE order_id=?`, [id]);
       if (processes.length) {
-        const values = processes.map((p: any) => [id, p.name, dateOnly(p.planned_date), p.done ? 1 : 0]);
+        // >>> ALTERADO: inserir updated_at nos processos (bulk) <<<
+        const values = processes.map((p: any) => [
+          id,
+          p.name,
+          dateOnly(p.planned_date),
+          p.done ? 1 : 0,
+          new Date(), // updated_at
+        ]);
         await conn.query(
-          `INSERT INTO order_processes (order_id, name, planned_date, done) VALUES ?`,
+          `INSERT INTO processes (order_id, name, planned_date, done, updated_at) VALUES ?`,
           [values]
         );
       }
     }
 
     if (Array.isArray(materials)) {
-      await conn.query(`DELETE FROM order_materials WHERE order_id=?`, [id]);
+      await conn.query(`DELETE FROM materials WHERE order_id=?`, [id]);
       if (materials.length) {
-        const values = materials.map((m: any) => [id, m.description, m.qty || 0, m.unit || "Peças", m.in_stock ? 1 : 0]);
+        const values = materials.map((m: any) => [
+          id,
+          m.description,
+          m.qty || 0,
+          m.unit || "Peças",
+          m.in_stock ? 1 : 0,
+          new Date(), // updated_at
+        ]);
         await conn.query(
-          `INSERT INTO order_materials (order_id, description, qty, unit, in_stock) VALUES ?`,
+          `INSERT INTO materials (order_id, description, qty, unit, in_stock, updated_at) VALUES ?`,
           [values]
         );
       }

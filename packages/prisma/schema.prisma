@@ -1,9 +1,4 @@
-// prisma/schema.prisma
-// Schema completo do Projeto Kogma (MySQL 8.0)
-// - Modelos mapeados para as tabelas existentes em snake_case/plural
-// - Enums mapeados para valores em minúsculo/PT-BR quando necessário
-// - Datas que eram DATE no MySQL anotadas com @db.Date
-// - Campos created_at/updated_at com defaults
+// packages/prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -14,108 +9,119 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Usuários do sistema (admin e usuários comuns)
+// ---------------- Enums mapeados aos valores do banco ----------------
+
+enum Role {
+  ADMIN @map("admin")
+  USER  @map("user")
+}
+
+enum UserStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
+}
+
+enum OrderStatus {
+  OPEN @map("open")
+  LATE @map("late")
+  DONE @map("done")
+}
+
+enum OrderUnit {
+  UNIDADES @map("Unidades")
+  KG       @map("KG")
+  M        @map("M")
+  M2       @map("M2")
+  M3       @map("M3")
+  PECAS    @map("Peças")
+}
+
+enum MaterialUnit {
+  PECAS @map("Peças")
+  KG    @map("KG")
+  M     @map("M")
+  M2    @map("M2")
+  M3    @map("M3")
+}
+
+// ---------------- Models ----------------
+
 model User {
-  id            Int       @id @default(autoincrement())
-  name          String
-  email         String    @unique
-  passwordHash  String    @map("password_hash")
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id           Int         @id @default(autoincrement())
+  name         String
+  email        String      @unique
+  passwordHash String?     @map("password_hash")
+  role         Role        @default(USER)
+  status       UserStatus  @default(ACTIVE) @map("status")
+
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt      @map("updated_at")
 
   @@map("users")
 }
 
-/// Empresas/clientes
 model Company {
-  id         Int       @id @default(autoincrement())
-  name       String
-  cnpj       String?   @unique
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  id        Int      @id @default(autoincrement())
+  name      String
+  cnpj      String?  @unique
+  createdAt DateTime @default(now()) @map("created_at")
 
-  // Relações
-  orders     Order[]
+  orders    Order[]
 
   @@map("companies")
 }
 
-/// Pedidos de produção
 model Order {
-  id             Int        @id @default(autoincrement())
-  companyId      Int        @map("company_id")
+  id             Int          @id @default(autoincrement())
+  companyId      Int          @map("company_id")
   title          String
-  qty            Int
-  unit           Unit
-  clientDeadline DateTime?  @db.Date @map("client_deadline")
-  finalDeadline  DateTime?  @db.Date @map("final_deadline")
-  status         Status      @default(OPEN)
-  createdAt      DateTime    @default(now()) @map("created_at")
-  updatedAt      DateTime    @updatedAt @map("updated_at")
+  qty            Decimal      @db.Decimal(12, 3) @default(0)
+  unit           OrderUnit    @default(UNIDADES)
+  clientDeadline DateTime?    @db.Date @map("client_deadline")
+  finalDeadline  DateTime?    @db.Date @map("final_deadline")
+  status         OrderStatus  @default(OPEN)
 
-  // Relações
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  materials Material[]
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt      @map("updated_at")
+
+  company   Company  @relation(fields: [companyId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   processes Process[]
+  materials Material[]
 
   @@index([companyId], map: "idx_orders_company_id")
+  @@index([status], map: "idx_orders_status")
   @@map("orders")
 }
 
-/// Materiais associados a um pedido
-model Material {
-  id          Int       @id @default(autoincrement())
-  orderId     Int       @map("order_id")
-  description String
-  qty         Int
-  unit        Unit
-  inStock     Boolean   @default(true) @map("in_stock")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  // Relações
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@index([orderId], map: "idx_materials_order_id")
-  @@map("materials")
-}
-
-/// Processos/etapas de produção de um pedido
 model Process {
   id          Int       @id @default(autoincrement())
   orderId     Int       @map("order_id")
-  name        String
+  name        String    @db.VarChar(100)
   plannedDate DateTime? @db.Date @map("planned_date")
   done        Boolean   @default(false)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  // Relações
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt      @map("updated_at")
+
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([orderId], map: "idx_processes_order_id")
   @@map("processes")
 }
 
-/// Papel do usuário
-enum Role {
-  ADMIN @map("admin")
-  USER  @map("user")
-}
+model Material {
+  id          Int           @id @default(autoincrement())
+  orderId     Int           @map("order_id")
+  description String
+  qty         Decimal       @db.Decimal(12, 3) @default(0)
+  unit        MaterialUnit  @default(PECAS)
+  inStock     Boolean       @default(false) @map("in_stock")
 
-/// Unidade de medida (mapeada para PT-BR no banco)
-enum Unit {
-  PECAS @map("Peças")
-  KG
-  M
-  M2
-  M3
-}
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt      @map("updated_at")
 
-/// Status do pedido
-enum Status {
-  OPEN @map("open")
-  LATE @map("late")
-  DONE @map("done")
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([orderId], map: "idx_materials_order_id")
+  @@map("materials")
 }

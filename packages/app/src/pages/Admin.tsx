@@ -1,24 +1,88 @@
+// src/pages/Admin.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 type Role = "admin" | "user";
 type Status = "active" | "inactive";
-type User = { id: number; email: string; role: Role; status: Status; name?: string };
+type User = {
+  id: number;
+  email: string;
+  role: Role;
+  status: Status;
+  name?: string;
+};
 
 function Modal({
-  open, onClose, children, width = 650
-}: { open: boolean; onClose: () => void; children: React.ReactNode; width?: number }) {
+  open,
+  onClose,
+  children,
+  width = 650,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  width?: number;
+}) {
   if (!open) return null;
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" style={{ width }} onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-card"
+        style={{ width }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {children}
       </div>
     </div>
   );
 }
 
+/**
+ * Componente de gate: verifica permissão e só então renderiza o conteúdo.
+ * Mantém a ordem de hooks estável entre renders.
+ */
 export default function Admin() {
+  const nav = useNavigate();
+  const [status, setStatus] = useState<"checking" | "allowed" | "denied">(
+    "checking"
+  );
+
+  useEffect(() => {
+    let alive = true;
+    const token = localStorage.getItem("token") || "";
+    fetch("http://localhost:3333/auth/admin-gate", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!alive) return;
+        setStatus(res.status === 204 ? "allowed" : "denied");
+      })
+      .catch(() => {
+        if (!alive) return;
+        setStatus("denied");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (status === "denied") {
+      nav("/", { replace: true });
+    }
+  }, [status, nav]);
+
+  if (status !== "allowed") return null;
+
+  return <AdminContent />;
+}
+
+/**
+ * Conteúdo real da página de Administração.
+ */
+function AdminContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -42,13 +106,23 @@ export default function Admin() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      await load();
+      if (!alive) return;
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function addUser() {
     setErr(null);
     try {
       const r = await api("/admin/users", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailNew, role: roleNew }),
       });
       if (!r.ok) {
@@ -69,6 +143,7 @@ export default function Admin() {
     try {
       const r = await api(`/admin/users/${id}`, {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
       });
       if (!r.ok) {
@@ -81,10 +156,11 @@ export default function Admin() {
     }
   }
 
-  async function setStatus(id: number, status: Status) {
+  async function updateStatus(id: number, status: Status) {
     try {
       const r = await api(`/admin/users/${id}`, {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
       if (!r.ok) {
@@ -97,41 +173,45 @@ export default function Admin() {
     }
   }
 
-  const rows = useMemo(() => users.map(u => (
-    <div key={u.id} className="row">
-      <div className="col-email">{u.email}</div>
+  const rows = useMemo(
+    () =>
+      users.map((u) => (
+        <div key={u.id} className="row">
+          <div className="col-email">{u.email}</div>
 
-      <div className="col-role">
-        <select
-          className="select"
-          value={u.role}
-          onChange={(e) => changeRole(u.id, e.target.value as Role)}
-        >
-          <option value="admin">Admin</option>
-          <option value="user">Usuário</option>
-        </select>
-      </div>
+          <div className="col-role">
+            <select
+              className="select"
+              value={u.role}
+              onChange={(e) => changeRole(u.id, e.target.value as Role)}
+            >
+              <option value="admin">Admin</option>
+              <option value="user">Usuário</option>
+            </select>
+          </div>
 
-      <div className="col-status">
-        <select
-          className="select"
-          value={u.status}
-          onChange={(e) => {
-            const next = e.target.value as Status;
-            if (u.status === "active" && next === "inactive") {
-              setConfirmDisableId(u.id);
-              setPendingStatus("inactive");
-              return; 
-            }
-            setStatus(u.id, next);
-          }}
-        >
-          <option value="active">Ativo</option>
-          <option value="inactive">Inativo</option>
-        </select>
-      </div>
-    </div>
-  )), [users]);
+          <div className="col-status">
+            <select
+              className="select"
+              value={u.status}
+              onChange={(e) => {
+                const next = e.target.value as Status;
+                if (u.status === "active" && next === "inactive") {
+                  setConfirmDisableId(u.id);
+                  setPendingStatus("inactive");
+                  return;
+                }
+                updateStatus(u.id, next);
+              }}
+            >
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+            </select>
+          </div>
+        </div>
+      )),
+    [users]
+  );
 
   return (
     <div className="admin-wrap">
@@ -159,7 +239,11 @@ export default function Admin() {
         <div className="modal-title">ADICIONAR USUÁRIO</div>
         <div className="modal-divider" />
         <div className="modal-form">
-          {err && <div className="error" style={{ marginBottom: 10 }}>{err}</div>}
+          {err && (
+            <div className="error" style={{ marginBottom: 10 }}>
+              {err}
+            </div>
+          )}
 
           <label className="label">Email:</label>
           <input
@@ -170,7 +254,9 @@ export default function Admin() {
             placeholder="email@exemplo.com"
           />
 
-          <label className="label" style={{ marginTop: 12 }}>Permissão:</label>
+          <label className="label" style={{ marginTop: 12 }}>
+            Permissão:
+          </label>
           <select
             className="select light"
             value={roleNew}
@@ -181,8 +267,12 @@ export default function Admin() {
           </select>
 
           <div className="modal-actions">
-            <button className="btn-ghost" onClick={() => setOpenAdd(false)}>Cancelar</button>
-            <button className="btn-primary" onClick={addUser}>Confirmar</button>
+            <button className="btn-ghost" onClick={() => setOpenAdd(false)}>
+              Cancelar
+            </button>
+            <button className="btn-primary" onClick={addUser}>
+              Confirmar
+            </button>
           </div>
         </div>
       </Modal>
@@ -193,29 +283,42 @@ export default function Admin() {
         <div className="modal-center">
           <div className="modal-text-strong">E-mail cadastrado no sistema!</div>
           <div className="modal-text-muted">
-            Para prosseguir, o funcionário deve acessar a opção "Cadastrar nova senha" no Menu inicial.
+            Para prosseguir, o funcionário deve acessar a opção "Cadastrar nova
+            senha" no Menu inicial.
           </div>
         </div>
         <div className="modal-actions center">
-          <button className="btn-pill" onClick={() => setOpenAdded(false)}>Concluir</button>
+          <button className="btn-pill" onClick={() => setOpenAdded(false)}>
+            Concluir
+          </button>
         </div>
       </Modal>
 
       <Modal
         open={confirmDisableId !== null}
-        onClose={() => { setConfirmDisableId(null); setPendingStatus(""); }}
+        onClose={() => {
+          setConfirmDisableId(null);
+          setPendingStatus("");
+        }}
         width={560}
       >
         <div className="modal-title center">DESABILITAR USUÁRIO?</div>
         <div className="modal-divider" />
         <div className="modal-center">
-          <div className="modal-text-strong">Você tem certeza que deseja desabilitar este usuário?</div>
-          <div className="modal-text-muted">Ele não poderá acessar o sistema até ser reativado.</div>
+          <div className="modal-text-strong">
+            Você tem certeza que deseja desabilitar este usuário?
+          </div>
+          <div className="modal-text-muted">
+            Ele não poderá acessar o sistema até ser reativado.
+          </div>
         </div>
         <div className="modal-actions">
           <button
             className="btn-ghost"
-            onClick={() => { setConfirmDisableId(null); setPendingStatus(""); }}
+            onClick={() => {
+              setConfirmDisableId(null);
+              setPendingStatus("");
+            }}
           >
             Cancelar
           </button>
@@ -223,7 +326,7 @@ export default function Admin() {
             className="btn-warning"
             onClick={async () => {
               if (confirmDisableId && pendingStatus === "inactive") {
-                await setStatus(confirmDisableId, "inactive");
+                await updateStatus(confirmDisableId, "inactive");
               }
               setConfirmDisableId(null);
               setPendingStatus("");

@@ -24,6 +24,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@prisma/client": "^6.16.2"
+    "@prisma/client": "^6.16.2",
+    "nodemailer": "^7.0.6"
   }
 }
