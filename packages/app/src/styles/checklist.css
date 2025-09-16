@@ -178,3 +178,35 @@
   .col.status{ justify-self: start; margin-top: 6px; }
   .ckl-labels span:last-child{ display:none; }
 }
+
+
+.page-wrap.checklistTable div,.page-wrap.checklistTable span {
+    color: #24436e !important;
+}
+.table-body.tableMaterials {
+    margin: 0;
+}
+.row.rowMaterials {
+    background-color: #fff !important;
+    border-radius: 0;
+}
+.row.rowMaterials {
+    display: flex;
+    justify-content: space-between;
+}
+.row.rowMaterials div {
+  flex: 1;
+  text-align: start !important;
+}
+.table-head-materials {
+    display: flex;
+    justify-content: space-between;
+}
+.table-head-materials div{
+   flex: 1;
+  text-align: start !important;
+  place-items: start;
+}
+.table-head-materials div {
+    font-weight: bold;
+}

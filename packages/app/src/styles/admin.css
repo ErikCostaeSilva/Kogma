@@ -3,3 +3,51 @@
 .adm .trash{
   height:36px;width:36px;border-radius:10px;border:2px solid #dce6f7;background:#fff;cursor:pointer;color:var(--blue-500);
 }
+.table-body.adminTable .row {
+    display: flex;
+    justify-content: space-between;
+}
+.table-head.three {
+    display: flex
+;
+    justify-content: space-between;
+    padding: 12px 14px;
+}
+.table-head.three div {
+  flex: 1;
+}
+.table-body.adminTable .row div {
+    flex: 1;
+}
+.table-body.adminTable select.select {
+    border: 1px solid #314c7d;
+    padding: 0.4em 2em;
+    font-size: 0.9em;
+    color: #314c7d;
+    border-radius: 6px;
+    outline: none;
+}
+.modal-card input.input.light {
+    margin-bottom: 1em;
+}
+select.select.light {
+    display: flex;
+    margin-top: 1em;
+    padding: 0.7em 1em;
+    border: 1px solid #314c7d;
+    border-radius: 5px;
+    font-size: 0.85em;
+}
+.modal-title {
+  color: #314c7d;
+    font-weight: 700;
+    font-size: 1.7em;
+    text-align: center;
+    margin-bottom: 1.5em;
+}
+.modal-actions button {
+    margin: 0;
+}
+.modal-actions {
+  margin-top: 3em;
+}

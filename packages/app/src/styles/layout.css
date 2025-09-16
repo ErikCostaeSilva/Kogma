@@ -2,13 +2,7 @@
 .app-shell{
   min-height:100%;
   display:grid;
-  grid-template-columns: 280px 1fr;
-}
-
-.sidebar{
-  background:var(--blue-700);
-  color:#fff;
-  padding:28px 22px;
+  grid-template-columns: 20% 1fr;
 }
 
 .sidebar .brand{
@@ -32,8 +26,8 @@
 .nav-item:hover{background:rgba(255,255,255,.06)}
 .nav-item.active{background:rgba(255,255,255,.12)}
 
-.app-main{padding:28px 24px}
-.page-wrap{max-width:1120px;margin:0 auto}
+.app-main{padding:28px 3%}
+.page-wrap{max-width:100%;margin:0 auto}
 .admin-title{
   font-weight:900; letter-spacing:1px; color:var(--blue-500); font-size:36px;
 }
@@ -49,7 +43,7 @@
   color:#6b7ba0; font-weight:700; padding:8px 10px 14px;
   border-bottom:1px solid #e8eef8;
 }
-.table-body{display:flex; flex-direction:column; gap:12px; padding-top:12px}
+.table-body{display:flex; flex-direction:column; gap:12px; padding:0;}
 .row{
   display:grid; gap:12px; align-items:center;
   background:#fff; border:1px solid #e7eef9; border-radius:12px; padding:12px 14px;
@@ -57,3 +51,44 @@
 .row.hover{cursor:pointer}
 .col-email{display:flex; flex-direction:column}
 .helper{color:#7d8db3; font-size:14px}
+
+.table-headFull {
+    display: grid;
+    grid-template-columns: 1fr 150px 137px;
+    margin-bottom: 1.5em;
+}
+.table-headFull p {
+    color: #2f4f82;
+    font-size: 1.2em;
+}
+.table-headFull>div {
+    display: flex;
+    gap: 20%;
+}
+.order-compact {
+    color: #2a3f66;
+    display: flex;
+    gap: 4vw;
+}
+.company {
+    width: 208px;
+    color: #314c7d;
+}
+.row.order-row:nth-child(odd) {
+    background-color: #eeeeee;
+    border-radius: 0;
+}
+.card.pedidos-head .row.order-row .company {
+    font-weight: 400;
+    font-size: 1.2em;
+}
+.card.pedidos-head .order {
+    font-size: 1.2em;
+    color: #314c7d;
+    font-weight: 400;
+    opacity: 1;
+}
+.card.pedidos-head select.status-select {
+    font-size: 1.05em;
+    font-weight: 400;
+}

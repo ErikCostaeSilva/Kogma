@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import StatusFilterPill, { StatusFilterValue } from "../components/StatusFilterPill";
+import SearchPill from "../components/SearchPill";
+import StatusPillSelect from "../components/StatusPillSelect";
+
+
 
 type OrderMaterial = {
   id?: number;
@@ -102,8 +107,6 @@ export default function Checklist() {
     const key = `mat-${o.id}-${idx}`;
     if (saving[key]) return;
 
-    // impede que o clique na checkbox colapse/expanda a linha
-    // (alguns navegadores disparam o onClick no pai antes)
     const optimistic = !o.materials[idx].in_stock;
 
     // Otimismo na UI
@@ -124,7 +127,7 @@ export default function Checklist() {
     try {
       // backend espera array completo de materials
       const materialsPayload = o.materials.map((m, i) => ({
-        description: i === idx ? m.description : m.description,
+        description: m.description,
         qty: Number(m.qty || 0),
         unit: m.unit,
         in_stock: i === idx ? optimistic : !!m.in_stock,
@@ -172,49 +175,26 @@ export default function Checklist() {
   }
 
   return (
-    <div className="page-wrap">
+    <div className="page-wrap checklistTable">
       <h1 className="admin-title">CHECKLIST</h1>
 
-      {/* Filtros topo */}
+      {/* Filtros topo (componentizados) */}
       <div className="card" style={{ marginBottom: 16 }}>
         <div
           className="card-header"
           style={{ display: "flex", gap: 12, alignItems: "center" }}
         >
-          <div className="segmented">
-            <button
-              className={`seg-btn ${status === "all" ? "active" : ""}`}
-              onClick={() => setStatus("all")}
-            >
-              Todos
-            </button>
-            <button
-              className={`seg-btn ${status === "open" ? "active" : ""}`}
-              onClick={() => setStatus("open")}
-            >
-              Em aberto
-            </button>
-            <button
-              className={`seg-btn ${status === "late" ? "active" : ""}`}
-              onClick={() => setStatus("late")}
-            >
-              Atrasado
-            </button>
-            <button
-              className={`seg-btn ${status === "done" ? "active" : ""}`}
-              onClick={() => setStatus("done")}
-            >
-              Finalizado
-            </button>
-          </div>
+          <StatusFilterPill
+            value={status as StatusFilterValue}
+            onChange={(v) => setStatus(v)}
+          />
 
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-            <input
-              className="input light"
-              placeholder="Buscar por nome do pedido"
+            <SearchPill
               value={q}
-              onChange={(e) => setQ(e.target.value)}
-              style={{ width: 360 }}
+              onChange={setQ}
+              placeholder="Pesquisar"
+              onSubmit={() => load()} // opcional: busca imediata no Enter
             />
           </div>
         </div>
@@ -240,7 +220,7 @@ export default function Checklist() {
               <React.Fragment key={o.id}>
                 <div
                   className="row hover"
-                  style={{ gridTemplateColumns: "1fr 160px" }}
+                  style={{ gridTemplateColumns: "1fr 225px" }}
                   onClick={() => toggleExpand(o.id)}
                 >
                   <div className="col-email" style={{ cursor: "pointer" }}>
@@ -251,9 +231,16 @@ export default function Checklist() {
                       {o.title}
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <StatusPill status={o.status} />
-                  </div>
+                                    {/* Status rápido (mesmo formato do Pedidos.tsx) */}
+                    <div
+                      style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}
+                      onClick={(e) => e.stopPropagation()} // evita colapso ao clicar no select
+                    >
+                      <StatusPillSelect
+                        value={o.status}
+                        onChange={(next) => changeStatus(o, next)}
+                      />
+                    </div>
                 </div>
 
                 {expandedId === o.id && (
@@ -267,32 +254,14 @@ export default function Checklist() {
                       marginBottom: 12,
                     }}
                   >
-                    {/* Status rápido */}
-                    <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}>
-                      <span style={{ color: "#cfd7e6", fontSize: 13 }}>Status do pedido:</span>
-                      <select
-                        className="input light"
-                        value={o.status}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          changeStatus(o, e.target.value as OrderRow["status"]);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ maxWidth: 220 }}
-                      >
-                        <option value="open">Em aberto</option>
-                        <option value="late">Atrasado</option>
-                        <option value="done">Finalizado</option>
-                      </select>
-                    </div>
 
                     {/* Materiais */}
-                    <div className="table-head" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
+                    <div className="table-head-materials" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
                       <div>Material</div>
                       <div style={{ textAlign: "right" }}>Qtd</div>
                       <div style={{ textAlign: "center" }}>Entregue</div>
                     </div>
-                    <div className="table-body">
+                    <div className="table-body tableMaterials">
                       {o.materials.length === 0 ? (
                         <div className="helper">Nenhum material cadastrado.</div>
                       ) : (
@@ -301,9 +270,8 @@ export default function Checklist() {
                           return (
                             <div
                               key={idx}
-                              className="row"
+                              className="row rowMaterials"
                               style={{ gridTemplateColumns: "1fr 120px 100px" }}
-                              // evita colapso ao clicar nas células internas
                               onClick={(e) => e.stopPropagation()}
                             >
                               <div
@@ -318,7 +286,7 @@ export default function Checklist() {
                               <div style={{ textAlign: "right", color: "#cfd7e6" }}>
                                 {m.qty} {m.unit}
                               </div>
-                              <div style={{ display: "grid", placeItems: "center" }}>
+                              <div>
                                 <input
                                   type="checkbox"
                                   checked={!!m.in_stock}

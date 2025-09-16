@@ -6,7 +6,7 @@ type Status = "active" | "inactive";
 type User = { id: number; email: string; role: Role; status: Status; name?: string };
 
 function Modal({
-  open, onClose, children, width = 560
+  open, onClose, children, width = 650
 }: { open: boolean; onClose: () => void; children: React.ReactNode; width?: number }) {
   if (!open) return null;
   return (
@@ -154,13 +154,13 @@ export default function Admin() {
           <div>Status:</div>
         </div>
 
-        <div className="table-body">
+        <div className="table-body adminTable">
           {loading ? <div className="helper">Carregando...</div> : rows}
         </div>
       </div>
 
       {/* Modal: adicionar usuário */}
-      <Modal open={openAdd} onClose={() => setOpenAdd(false)} width={520}>
+      <Modal open={openAdd} onClose={() => setOpenAdd(false)} width={650}>
         <div className="modal-title">ADICIONAR USUÁRIO</div>
         <div className="modal-divider" />
         <div className="modal-form">

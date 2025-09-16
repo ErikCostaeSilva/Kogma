@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
-
+import StatusFilterPill, { StatusFilterValue } from "../components/StatusFilterPill";
+import SearchPill from "../components/SearchPill";
 /** ===== Tipos ===== */
 type Company = { id: number; name: string; cnpj: string };
 
@@ -54,6 +55,52 @@ function toDbDate(input: string | null | undefined) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${m}-${day}`;
 }
+function toBrDate(d?: string | null) {
+  if (!d) return "—";
+  // já estiver ISO
+  let iso = "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    iso = d;
+  } else {
+    // tenta normalizar usando o helper existente
+    iso = toInputDate(d);
+  }
+  if (!iso) return "—";
+  const [y, m, day] = iso.split("-");
+  return `${day}/${m}/${y}`;
+}
+
+/** ===== Validação de datas (NOVO) ===== */
+// === [VAL] limites ajustáveis
+const DATE_MIN = "1900-01-01";
+const DATE_MAX = "2100-12-31";
+
+// === [VAL] valida se é um ISO válido sem estourar por fuso
+function isValidISODate(iso?: string | null): boolean {
+  if (!iso) return false;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return false;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (mo < 1 || mo > 12) return false;
+  if (d < 1 || d > 31) return false;
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === mo - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+// === [VAL] como é YYYY-MM-DD, comparação de string funciona
+function isWithinRangeISO(iso: string, min = DATE_MIN, max = DATE_MAX) {
+  return iso >= min && iso <= max;
+}
+// === [VAL] função de erro humanizado
+function validateISODateField(iso?: string | null, label = "Data") {
+  if (!iso) return undefined; // deixe obrigatório em cada fluxo onde fizer sentido
+  if (!isValidISODate(iso)) return `${label}: inválida (use AAAA-MM-DD)`;
+  if (!isWithinRangeISO(iso)) return `${label}: fora do intervalo permitido (${DATE_MIN} a ${DATE_MAX})`;
+  return undefined;
+}
 
 /** ====== UI Atômicos ====== */
 function StatusPillSelect({
@@ -64,9 +111,18 @@ function StatusPillSelect({
   onChange: (v: OrderRow["status"]) => void;
 }) {
   return (
-    <div className="status-pill">
       <select
         className="status-select"
+        style={{
+      backgroundColor:
+        value === "late"
+          ? "#f6a19b" // vermelho
+          : value === "open"
+          ? "#f2da6e" // amarelo
+          : value === "done"
+          ? "#87d3ab" // verde
+          : "#fff",   // padrão
+    }}
         value={value}
         onChange={(e) => onChange(e.target.value as any)}
         aria-label="Alterar status"
@@ -75,7 +131,6 @@ function StatusPillSelect({
         <option value="late">Atrasado</option>
         <option value="done">Finalizado</option>
       </select>
-    </div>
   );
 }
 
@@ -138,6 +193,13 @@ export default function Pedidos() {
   );
   const [draft, setDraft] = useState(emptyDraft);
   const [saving, setSaving] = useState(false);
+
+  // === [VAL] estado de erros de data
+  const [dateErrors, setDateErrors] = useState<{
+    client_deadline?: string;
+    final_deadline?: string;
+    processes: Record<number, string | undefined>;
+  }>({ processes: {} });
 
   /** ====== Carregamento ====== */
   useEffect(() => {
@@ -207,6 +269,7 @@ export default function Pedidos() {
     setMode("create");
     setTargetId(null);
     setDraft(emptyDraft);
+    setDateErrors({ processes: {} }); // === [VAL] limpa erros
     setStep(1);
   }
   function openEdit(o: OrderRow) {
@@ -244,6 +307,7 @@ export default function Pedidos() {
         request: !m.in_stock,
       })),
     });
+    setDateErrors({ processes: {} }); // === [VAL] limpa erros
     setStep(1);
   }
   function openProcesses(o: OrderRow) {
@@ -268,6 +332,7 @@ export default function Pedidos() {
       }),
       materials: [],
     });
+    setDateErrors({ processes: {} }); // === [VAL] limpa erros
     setStep(2);
   }
 
@@ -289,14 +354,76 @@ export default function Pedidos() {
       alert("Preencha Empresa e Pedido.");
       return;
     }
+    // === [VAL] valida Prazo do Cliente
+    const iso = toInputDate(draft.client_deadline);
+    const err = validateISODateField(iso, "Prazo do Cliente");
+    setDateErrors((prev) => ({ ...prev, client_deadline: err }));
+    if (err) {
+      alert(err);
+      return;
+    }
     setStep(2);
   }
   function finishStep2() {
+    // === [VAL] valida todas as datas selecionadas + prazo final
+    let firstErr: string | undefined;
+    const procErrors: Record<number, string | undefined> = {};
+    draft.processes.forEach((p, idx) => {
+      if (!p.selected || !p.planned_date) return;
+      const e = validateISODateField(toInputDate(p.planned_date), `Data de "${p.name}"`);
+      if (e && !firstErr) firstErr = e;
+      procErrors[idx] = e;
+    });
+    const finalErr = validateISODateField(toInputDate(draft.final_deadline), "Prazo final");
+
+    setDateErrors((prev) => ({
+      ...prev,
+      processes: { ...prev.processes, ...procErrors },
+      final_deadline: finalErr,
+    }));
+
+    if (firstErr || finalErr) {
+      alert(firstErr || finalErr);
+      return;
+    }
     setStep(3);
   }
 
   async function persistOrder() {
     setSaving(true);
+
+    // === [VAL] última verificação antes de persistir
+    {
+      let firstErr: string | undefined;
+
+      const clientErr = validateISODateField(toInputDate(draft.client_deadline), "Prazo do Cliente");
+      if (!firstErr && clientErr) firstErr = clientErr;
+
+      const procErrors: Record<number, string | undefined> = {};
+      draft.processes.forEach((p, idx) => {
+        if (!p.selected || !p.planned_date) return;
+        const e = validateISODateField(toInputDate(p.planned_date), `Data de "${p.name}"`);
+        if (!firstErr && e) firstErr = e;
+        procErrors[idx] = e;
+      });
+
+      const finalErr = validateISODateField(toInputDate(draft.final_deadline), "Prazo final");
+      if (!firstErr && finalErr) firstErr = finalErr;
+
+      setDateErrors((prev) => ({
+        ...prev,
+        client_deadline: clientErr,
+        final_deadline: finalErr,
+        processes: { ...prev.processes, ...procErrors },
+      }));
+
+      if (firstErr) {
+        setSaving(false);
+        alert(firstErr);
+        return;
+      }
+    }
+
     try {
       const base = {
         company_id: draft.company_id,
@@ -426,46 +553,29 @@ export default function Pedidos() {
     }
   }
 
-  /** ====== Render ====== */
   return (
     <div className="page-wrap">
       <h1 className="admin-title">PEDIDOS</h1>
 
       <div className="card pedidos-head">
+
         {/* Toolbar dentro do mesmo card (filtro, busca, botão) */}
-        <div className="toolbar-3">
-          <div className="pill">
-            <select
-              className="pill-select"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as any)}
-            >
-              <option value="open">Em aberto</option>
-              <option value="late">Atrasado</option>
-              <option value="done">Finalizado</option>
-              <option value="all">Todos</option>
-            </select>
-            <svg width="15" height="8" viewBox="0 0 15 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1 0.5L7.39344 6.5L14 0.5" stroke="#314C7D"/>
-            </svg>
+       <div className="toolbar-3">
+  <StatusFilterPill
+    value={status as StatusFilterValue}
+    onChange={(v) => setStatus(v)}
+  />
 
-          </div>
+  <SearchPill
+    value={q}
+    onChange={setQ}
+    placeholder="Pesquisar"
+    // opcional: se quiser forçar busca no Enter imediatamente
+    // onSubmit={() => {/* se precisar algo extra além do useEffect */}}
+  />
 
-          <div className="pill pill-search">
-            <input
-              className="pill-input"
-              placeholder="Pesquisar"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18.4704 18.4304L24 24M21.4444 11.2222C21.4444 16.8678 16.8678 21.4444 11.2222 21.4444C5.57664 21.4444 1 16.8678 1 11.2222C1 5.57664 5.57664 1 11.2222 1C16.8678 1 21.4444 5.57664 21.4444 11.2222Z" stroke="#314C7D" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-
-          </div>
-
-          <button className="pill-btn" onClick={openNew}>Novo Pedido</button>
-        </div>
+  <button className="pill-btn" onClick={openNew}>Novo Pedido</button>
+</div>
 
         {/* Lista */}
         <div className="table-body">
@@ -559,10 +669,23 @@ export default function Pedidos() {
                 <input
                   className="input line"
                   type="date"
+                  min={DATE_MIN} // === [VAL]
+                  max={DATE_MAX} // === [VAL]
                   value={toInputDate(draft.client_deadline)}
-                  onChange={(e) => setDraft((d) => ({ ...d, client_deadline: e.target.value }))}
+                  aria-invalid={!!dateErrors.client_deadline} // === [VAL]
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setDraft((d) => ({ ...d, client_deadline: v }));
+                    setDateErrors((prev) => ({
+                      ...prev,
+                      client_deadline: validateISODateField(v, "Prazo do Cliente"),
+                    }));
+                  }}
                 />
               </div>
+              {dateErrors.client_deadline && (
+                <div className="form-error">{dateErrors.client_deadline}</div>
+              )}
             </div>
           </div>
 
@@ -620,16 +743,31 @@ export default function Pedidos() {
                     className="input line"
                     type="date"
                     disabled={!p.selected}
+                    min={DATE_MIN} // === [VAL]
+                    max={DATE_MAX} // === [VAL]
                     value={toInputDate(p.planned_date)}
+                    aria-invalid={!!dateErrors.processes[idx]} // === [VAL]
                     onChange={(e) =>
                       setDraft((d) => {
+                        const v = e.target.value;
                         const arr = [...d.processes];
-                        arr[idx] = { ...arr[idx], planned_date: e.target.value };
+                        arr[idx] = { ...arr[idx], planned_date: v };
+                        // === [VAL] valida cada processo
+                        setDateErrors((prev) => ({
+                          ...prev,
+                          processes: {
+                            ...prev.processes,
+                            [idx]: validateISODateField(v, `Data de "${p.name}"`),
+                          },
+                        }));
                         return { ...d, processes: arr };
                       })
                     }
                   />
                 </div>
+                {dateErrors.processes[idx] && (
+                  <div className="form-error">{dateErrors.processes[idx]}</div>
+                )}
               </div>
             ))}
 
@@ -640,10 +778,23 @@ export default function Pedidos() {
                 <input
                   className="input line"
                   type="date"
+                  min={DATE_MIN} // === [VAL]
+                  max={DATE_MAX} // === [VAL]
                   value={toInputDate(draft.final_deadline)}
-                  onChange={(e) => setDraft((d) => ({ ...d, final_deadline: e.target.value }))}
+                  aria-invalid={!!dateErrors.final_deadline} // === [VAL]
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setDraft((d) => ({ ...d, final_deadline: v }));
+                    setDateErrors((prev) => ({
+                      ...prev,
+                      final_deadline: validateISODateField(v, "Prazo final"),
+                    }));
+                  }}
                 />
               </div>
+              {dateErrors.final_deadline && (
+                <div className="form-error">{dateErrors.final_deadline}</div>
+              )}
             </div>
           </div>
 
@@ -793,18 +944,25 @@ function CompactOrderRow({
 
       <div style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center" }}>
         <IconButton title="Processos e prazos" onClick={onOpenProcesses}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm-7 0c.55 0 1 .45 1 1h-2c0-.55.45-1 1-1Zm7 18H5V5h2v2h10V5h2v16Z" />
+          <svg width="19" height="23" viewBox="0 0 19 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5.66667 3.33337H3.33333C2.04467 3.33337 1 4.37804 1 5.66671V19.6667C1 20.9554 2.04467 22 3.33333 22H15C16.2887 22 17.3333 20.9554 17.3333 19.6667V5.66671C17.3333 4.37804 16.2887 3.33337 15 3.33337H12.6667" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.69443 13.25L14.0278 13.25" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.69443 9.16663L14.0278 9.16663" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.69443 17.3334L14.0278 17.3334" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5.66666 3.33333C5.66666 2.04467 6.71132 1 7.99999 1H10.3333C11.622 1 12.6667 2.04467 12.6667 3.33333V5.66667H5.66666V3.33333Z" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+
         </IconButton>
         <IconButton title="Editar pedido" onClick={onOpenEdit}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm3.92.92H5.5v-1.41l8.06-8.06 1.41 1.41L6.92 18.17zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15.7778 2L20 6.22222L5.22222 21H1V16.7778L15.7778 2Z" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M12 7L14.95 9.95" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
+
         </IconButton>
       </div>
 
-      <div style={{ textAlign: "right" }}>
+      <div style={{ textAlign: "center" }}>
         <StatusPillSelect value={order.status} onChange={onChangeStatus} />
       </div>
     </div>
@@ -835,14 +993,19 @@ function ExpandedOrderCard({
 
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <IconButton title="Processos e prazos" onClick={(e) => { e.stopPropagation(); onOpenProcesses(); }}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm-7 0c.55 0 1 .45 1 1h-2c0-.55.45-1 1-1Zm7 18H5V5h2v2h10V5h2v16Z" />
-            </svg>
+            <svg width="19" height="23" viewBox="0 0 19 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5.66667 3.33337H3.33333C2.04467 3.33337 1 4.37804 1 5.66671V19.6667C1 20.9554 2.04467 22 3.33333 22H15C16.2887 22 17.3333 20.9554 17.3333 19.6667V5.66671C17.3333 4.37804 16.2887 3.33337 15 3.33337H12.6667" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.69443 13.25L14.0278 13.25" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.69443 9.16663L14.0278 9.16663" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.69443 17.3334L14.0278 17.3334" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5.66666 3.33333C5.66666 2.04467 6.71132 1 7.99999 1H10.3333C11.622 1 12.6667 2.04467 12.6667 3.33333V5.66667H5.66666V3.33333Z" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           </IconButton>
           <IconButton title="Editar pedido" onClick={(e) => { e.stopPropagation(); onOpenEdit(); }}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm3.92.92H5.5v-1.41l8.06-8.06 1.41 1.41L6.92 18.17zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-            </svg>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15.7778 2L20 6.22222L5.22222 21H1V16.7778L15.7778 2Z" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M12 7L14.95 9.95" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
           </IconButton>
         </div>
 
@@ -861,7 +1024,7 @@ function ExpandedOrderCard({
               return (
                 <div key={name}>
                   <div className="process-name">{name}</div>
-                  <div className="process-date">{p?.planned_date || "—"}</div>
+                  <div className="process-date">{toBrDate(p?.planned_date)}</div>
                 </div>
               );
             })}
@@ -870,45 +1033,57 @@ function ExpandedOrderCard({
 
         <div className="deadline-card">
           <div className="label">PRAZO FINAL</div>
-          <div className="value">{order.final_deadline || "—"}</div>
+          <div className="value">{toBrDate(order.final_deadline)}</div>
         </div>
       </div>
     </div>
   );
 }
 
-/** ===== Timeline visual ===== */
+/** ===== Timeline visual (posições customizadas) ===== */
+const CUSTOM_STEP_POS = [7, 24, 42, 58, 76, 92]; // em %
+
+/** ===== Timeline visual (posições customizadas + fill inicia em 2%) ===== */
 function Timeline({ processes }: { processes: ProcessItem[] }) {
-  const steps = [...ALL_PROCESSES].map(name => {
-    const hit = processes.find(p => p.name === name);
+  const CUSTOM_STEP_POS = [7, 24, 42, 58, 76, 92]; // em %
+  const START_OFFSET = 2; // fill começa em 2%
+
+  const steps = [...ALL_PROCESSES].map((name) => {
+    const hit = processes.find((p) => p.name === name);
     return { name, done: !!hit?.done };
   });
 
+  // Usa só a quantidade necessária de posições
+  const positions = CUSTOM_STEP_POS.slice(0, steps.length);
+
+  // Último índice concluído em sequência (do início até quebrar)
   let lastDone = -1;
   for (let i = 0; i < steps.length; i++) {
-    if (steps[i].done) lastDone = i; else break;
+    if (steps[i].done) lastDone = i;
+    else break;
   }
-  const total = steps.length;
-  const fillPercent = total > 1 ? (lastDone <= 0 ? 0 : (lastDone / (total - 1)) * 100) : 0;
+
+  // Cálculo do fill: parte de 2% e vai até a última bolinha concluída
+  const lastPos = lastDone >= 0 ? positions[lastDone] : START_OFFSET;
+  const fillLeft = START_OFFSET;
+  const fillWidth = Math.max(0, lastPos - START_OFFSET);
 
   return (
     <div className="process-timeline" aria-label="Linha do tempo dos processos">
       <div className="track" />
-      <div className="fill" style={{ width: `calc(${fillPercent}% - 4px)` }} />
-      {steps.map((s, i) => {
-        const left = total > 1 ? (i / (total - 1)) * 100 : 0;
-        return (
-          <div
-            key={s.name}
-            className={`process-dot ${i <= lastDone ? "done" : ""}`}
-            style={{ left: `calc(${left}% + 2%)` }}
-            title={s.name}
-          />
-        );
-      })}
+      <div className="fill" style={{ left: `${fillLeft}%`, width: `${fillWidth}%` }} />
+      {steps.map((s, i) => (
+        <div
+          key={s.name}
+          className={`process-dot ${i <= lastDone ? "done" : ""}`}
+          style={{ left: `${positions[i]}%`, transform: "translate(-50%, -50%)" }}
+          title={s.name}
+        />
+      ))}
     </div>
   );
 }
+
 
 /** ===== Modal base ===== */
 function Modal({

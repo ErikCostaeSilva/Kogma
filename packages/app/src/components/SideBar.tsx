@@ -64,7 +64,6 @@ export default function Sidebar() {
       {/* bloco do usuário (igual à referência) */}
       <div className="user-block">
         <div className="user-avatar" />
-        <div className="user-name">{user?.name || "Usuário"}</div>
       </div>
 
       <nav className="sidebar-nav">

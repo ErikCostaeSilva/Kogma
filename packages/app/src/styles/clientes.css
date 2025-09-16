@@ -1,3 +1,50 @@
 .clients .table-head{grid-template-columns:1fr 240px}
 .clients .row{grid-template-columns:1fr 240px}
 .clients .row .right{display:flex;justify-content:flex-end}
+button.btn-primary {
+    background-color: #314c7d;
+    border: none;
+    outline: none;
+    color: #fff;
+    padding: 0.75em 6em;
+    font-size: 1.1em;
+    border-radius: 22px;
+    font-weight: 200;
+    cursor: pointer;
+    display: flex
+;
+    margin: 2em 0;
+}
+.table-head {
+    display: flex
+;
+    justify-content: space-between;
+    padding-right: 13%;
+}
+.table-head div {
+    color: #314c7d;
+    font-weight: 500;
+    font-size: 1.2em;
+}
+.table-body {
+    margin-top: 2em;
+}
+.table-body .row:nth-child(odd) {
+    background-color: #eeeeee;
+}
+.table-body .row {
+    border: none;
+    margin: 0;
+}
+.table-body .row div {
+    color: #314b7c;
+}
+.table-body .row span {
+    font-weight: 400 !important;
+}
+.table-body button.btn-icon {
+    margin-left: 2em;
+    background-color: transparent;
+    border: 1px solid #314c7d;
+    border-radius: 4px;
+}

@@ -104,7 +104,11 @@ async function save(){
                   {c.cnpj ? formatCNPJ(c.cnpj) : "-"}
                 </span>
                 <button className="btn-icon" title="Editar" onClick={()=>openEdit(c)}>
-                  <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15.7778 2L20 6.22222L5.22222 21H1V16.7778L15.7778 2Z" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M12 7L14.95 9.95" stroke="#314C7D" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+
                 </button>
               </div>
             </div>
